@@ -1,0 +1,7 @@
+README.md
+setup.py
+cdksample/cdksample.egg-info/PKG-INFO
+cdksample/cdksample.egg-info/SOURCES.txt
+cdksample/cdksample.egg-info/dependency_links.txt
+cdksample/cdksample.egg-info/requires.txt
+cdksample/cdksample.egg-info/top_level.txt
