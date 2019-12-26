@@ -1,23 +1,11 @@
-import string
-import secrets
-
 from aws_cdk import (
     core,
-    aws_iam as iam
+    aws_iam as iam,
+    aws_secretsmanager as secretsmanager
 )
 
 
 class IamStack(core.Stack):
-
-    # @staticmethod
-    # def generate_password(size=12):
-    #     """パスワード生成関数
-    #     :return:
-    #     """
-    #     chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
-    #     # 記号を含める場合
-    #     # chars += '%&$#()'
-    #     return ''.join(secrets.choice(chars) for x in range(size))
 
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
@@ -115,7 +103,9 @@ class IamStack(core.Stack):
                     resources=['*'],
                     conditions={
                         'NotIpAddress': {
-                            'aws:SourceIp': '72.21.198.66/32'
+                            'aws:SourceIp': [
+                                '0.0.0.0/0'
+                            ]
                         }
                     }
                 )
@@ -128,59 +118,46 @@ class IamStack(core.Stack):
         ip_address_policy.attach_to_group(security_audit_group)
 
         ################
-        # グループの作成
+        # ユーザーの作成
         ################
+
+        # 作成したユーザーのパスワードはSecretManagerに格納する
 
         # 管理者ユーザーの作成
         admin_user_names = ['admin-user']
         for user_name in admin_user_names:
-            password = self.node.try_get_context('default_password')
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=core.SecretValue.plain_text(password),
-                password_reset_required=False
+                password=secret.secret_value,
+                password_reset_required=True
             )
             user.add_to_group(admin_group)
-            core.CfnOutput(
-                self, '{}Password'.format(user_name),
-                description='Password for user {}'.format(user_name),
-                value=password
-            )
 
         # 分析者ユーザーの作成
         data_scientist_user_names = ['data-user']
         for user_name in data_scientist_user_names:
-            password = self.node.try_get_context('default_password')
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=core.SecretValue.plain_text(password),
+                password=secret.secret_value,
                 password_reset_required=True
             )
             user.add_to_group(data_scientist_group)
-            core.CfnOutput(
-                self, '{}Password'.format(user_name),
-                description='Password for user {}'.format(user_name),
-                value=password
-            )
 
         # セキュリティ監査ユーザーの作成
         security_audit_user_names = ['audit-user']
         for user_name in security_audit_user_names:
-            password = self.node.try_get_context('default_password')
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=core.SecretValue.plain_text(password),
+                password=secret.secret_value,
                 password_reset_required=True
             )
             user.add_to_group(security_audit_group)
-            core.CfnOutput(
-                self, '{}Password'.format(user_name),
-                description='Password for user {}'.format(user_name),
-                value=password
-            )
 
         self.output_props = props.copy()
 

@@ -9,9 +9,6 @@ class WorkSpacesStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        prefix = props['prefix']
-        vpc = props['vpc']
-
         # SimpleADの作成
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_directoryservice/CfnSimpleAD.html
 

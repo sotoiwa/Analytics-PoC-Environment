@@ -3,6 +3,5 @@
   "aws-cdk:enableDiffNoFail": "true",
   "account": "",
   "region": "ap-northeast-1",
-  "key_name": "",
-  "default_password": ""
+  "key_name": ""
 }
