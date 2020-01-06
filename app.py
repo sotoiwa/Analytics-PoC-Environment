@@ -6,6 +6,7 @@ from cdksample.workspaces_vpc_stack import WorkSpacesVpcStack
 from cdksample.analytics_vpc_stack import AnalyticsVpcStack
 from cdksample.sap_vpc_stack import SapVpcStack
 from cdksample.vpc_peering_stack import VpcPeeringStack
+from cdksample.audit_log_stack import AuditLogStack
 from cdksample.iam_stack import IamStack
 from cdksample.basion_stack import BasionStack
 from cdksample.proxy_stack import ProxyStack
@@ -32,6 +33,9 @@ props = sap_vpc_stack.outputs
 
 vpc_peering_stack = VpcPeeringStack(app, '{}-VpcPeeringStack'.format(props['prefix']), env=env, props=props)
 props = vpc_peering_stack.outputs
+
+audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(props['prefix']), env=env, props=props)
+props = audit_log_stack.outputs
 
 iam_stack = IamStack(app, '{}-IamStack'.format(props['prefix']), env=env, props=props)
 props = iam_stack.outputs

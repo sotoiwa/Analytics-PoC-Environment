@@ -63,42 +63,6 @@ class VpcPeeringStack(core.Stack):
                 vpc_peering_connection_id=workspaces_to_sap_vpc_peering.ref
             )
 
-        # フローログ用のポリシー
-        flowlogs_policy = iam.Policy(
-            self, 'FlowLogsPolicy',
-            policy_name='FlowLogsPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:DescribeLogGroups',
-                        'logs:DescribeLogStreams',
-                        'logs:PutLogEvents'
-                    ],
-                    resources=['*']
-                )
-            ]
-        )
-        flowlogs_role = iam.Role(
-            self, 'FlowLogsRole',
-            role_name='FlowLogsRole',
-            assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
-        )
-        flowlogs_policy.attach_to_role(flowlogs_role)
-
-        # フローログを有効化
-        for vpc in [workspaces_vpc, analytics_vpc, sap_vpc]:
-            flowlogs = ec2.CfnFlowLog(
-                self, 'FlowLogs{}'.format(vpc.to_string()),
-                resource_id=vpc.vpc_id,
-                resource_type='VPC',
-                traffic_type='ALL',
-                deliver_logs_permission_arn=flowlogs_role.role_arn,
-                log_destination_type='cloud-watch-logs',
-                log_group_name='VPCFlowLogs/{}'.format(vpc.vpc_id)
-            )
-
         self.output_props = props.copy()
 
     @property

@@ -5,3 +5,4 @@ aws-cdk.aws_iam
 aws-cdk.aws_directoryservice
 aws-cdk.aws_autoscaling
 aws-cdk.aws_secretsmanager
+aws-cdk.aws_cloudtrail

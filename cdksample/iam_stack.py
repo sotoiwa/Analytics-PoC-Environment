@@ -13,20 +13,24 @@ class IamStack(core.Stack):
         # IAM
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_iam.html
 
-        # 職務機能の AWS 管理ポリシー
-        # https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/access_policies_job-functions.html
-
         ################
-        # ロールの作成
+        # グループの作成
         ################
 
-        # コスト管理者ロール
-        billing_admin_role = iam.Role(
-            self, 'BillingAdminRole',
-            role_name='BillingAdminRole',
-            assumed_by=iam.AccountPrincipal(self.node.try_get_context('account'))
+        # 全体管理者グループ
+        admin_group = iam.Group(
+            self, 'AdminGroup',
+            group_name='AdminGroup'
         )
-        # コスト管理者ロール用のインラインポリシー
+        admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AdministratorAccess'))
+
+        # システム管理者グループ
+        # コスト管理、S3管理、環境管理のロールを兼ねるグループ
+        system_admin_group = iam.Group(
+            self, 'SystemAdminGroup',
+            group_name='SystemAdminGroup'
+        )
+        # コスト管理用のインラインポリシー
         billing_admin_policy = iam.Policy(
             self, 'BillingAdminPolicy',
             statements=[
@@ -46,15 +50,19 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        billing_admin_policy.attach_to_role(billing_admin_role)
-
-        # 環境管理者ロール
-        environment_admin_role = iam.Role(
-            self, 'EnvironmentAdminRole',
-            role_name='EnvironmentAdminRole',
-            assumed_by=iam.AccountPrincipal(self.node.try_get_context('account'))
+        billing_admin_policy.attach_to_group(system_admin_group)
+        # S3管理用のインラインポリシー
+        s3_admin_policy = iam.Policy(
+            self, 'S3AdminPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=["s3:*"],
+                    resources=["*"]
+                )
+            ]
         )
-        # 環境管理者ロール用のインラインポリシー
+        s3_admin_policy.attach_to_group(system_admin_group)
+        # 環境管理用のインラインポリシー
         environment_admin_policy = iam.Policy(
             self, 'EnvironmentAdminPolicy',
             statements=[
@@ -66,55 +74,6 @@ class IamStack(core.Stack):
                         "elasticmapreduce:*",
                         "sagemaker:*",
                         "quicksight:*"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "s3:GetAccessPoint",
-                        "s3:GetLifecycleConfiguration",
-                        "s3:GetBucketTagging",
-                        "s3:GetInventoryConfiguration",
-                        "s3:GetObjectVersionTagging",
-                        "s3:ListBucketVersions",
-                        "s3:GetBucketLogging",
-                        "s3:ListBucket",
-                        "s3:GetAccelerateConfiguration",
-                        "s3:GetBucketPolicy",
-                        "s3:GetObjectVersionTorrent",
-                        "s3:GetObjectAcl",
-                        "s3:GetEncryptionConfiguration",
-                        "s3:GetBucketObjectLockConfiguration",
-                        "s3:GetBucketRequestPayment",
-                        "s3:GetAccessPointPolicyStatus",
-                        "s3:GetObjectVersionAcl",
-                        "s3:GetObjectTagging",
-                        "s3:GetMetricsConfiguration",
-                        "s3:HeadBucket",
-                        "s3:GetBucketPublicAccessBlock",
-                        "s3:GetBucketPolicyStatus",
-                        "s3:ListBucketMultipartUploads",
-                        "s3:GetObjectRetention",
-                        "s3:GetBucketWebsite",
-                        "s3:ListAccessPoints",
-                        "s3:ListJobs",
-                        "s3:GetBucketVersioning",
-                        "s3:GetBucketAcl",
-                        "s3:GetObjectLegalHold",
-                        "s3:GetBucketNotification",
-                        "s3:GetReplicationConfiguration",
-                        "s3:ListMultipartUploadParts",
-                        "s3:GetObject",
-                        "s3:GetObjectTorrent",
-                        "s3:GetAccountPublicAccessBlock",
-                        "s3:ListAllMyBuckets",
-                        "s3:DescribeJob",
-                        "s3:GetBucketCORS",
-                        "s3:GetAnalyticsConfiguration",
-                        "s3:GetObjectVersionForReplication",
-                        "s3:GetBucketLocation",
-                        "s3:GetAccessPointPolicy",
-                        "s3:GetObjectVersion"
                     ],
                     resources=["*"]
                 ),
@@ -194,80 +153,10 @@ class IamStack(core.Stack):
                 ),
             ]
         )
-        environment_admin_policy.attach_to_role(environment_admin_role)
-
-        # S3管者者ロール
-        s3_admin_role = iam.Role(
-            self, 'S3AdminRole',
-            role_name='S3AdminRole',
-            assumed_by=iam.AccountPrincipal(self.node.try_get_context('account'))
-        )
-        # S3管理者ロール用のインラインポリシー
-        s3_admin_policy = iam.Policy(
-            self, 'S3AdminPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=["s3:*"],
-                    resources=["*"]
-                )
-            ]
-        )
-        s3_admin_policy.attach_to_role(s3_admin_role)
-
-        # KMS管理者ロール
-        kms_admin_role = iam.Role(
-            self, 'KmsAdminRole',
-            role_name='KmsAdminRole',
-            assumed_by=iam.AccountPrincipal(self.node.try_get_context('account'))
-        )
-        # KMS管理者ロール用のインラインポリシー
-        kms_admin_policy = iam.Policy(
-            self, 'KmsAdminPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=["kms:*"],
-                    resources=["*"]
-                )
-            ]
-        )
-        kms_admin_policy.attach_to_role(kms_admin_role)
-
-        ################
-        # グループの作成
-        ################
-
-        # 全体管理者グループ
-        # グループにポリシーを直接アタッチする
-        admin_group = iam.Group(
-            self, 'AdminGroup',
-            group_name='AdminGroup'
-        )
-        admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AdministratorAccess'))
-
-        # システム管理者グループ
-        # 各種の管理者ロールへのスイッチロールのみを許可する
-        system_admin_group = iam.Group(
-            self, 'SystemAdminGroup',
-            group_name='SystemAdminGroup'
-        )
-        # システム管理者用のインラインポリシー
-        system_admin_policy = iam.Policy(
-            self, 'SystemAdminPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=['sts:AssumeRole'],
-                    resources=[
-                        billing_admin_role.role_arn,
-                        environment_admin_role.role_arn,
-                        s3_admin_role.role_arn,
-                        kms_admin_role.role_arn
-                    ]
-                )
-            ]
-        )
-        system_admin_policy.attach_to_group(system_admin_group)
+        environment_admin_policy.attach_to_group(system_admin_group)
 
         # セキュリティ監査者グループ
+        # セキュリティ監査とKMS管理のロールを兼ねるグループ
         security_audit_group = iam.Group(
             self, 'SecurityAuditGroup',
             group_name='SecurityAuditGroup'
@@ -339,6 +228,17 @@ class IamStack(core.Stack):
             ]
         )
         system_admin_policy.attach_to_group(security_audit_group)
+        # KMS管理用のポリシー
+        kms_admin_policy = iam.Policy(
+            self, 'KmsAdminPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=["kms:*"],
+                    resources=["*"]
+                )
+            ]
+        )
+        kms_admin_policy.attach_to_role(security_audit_group)
 
         # 分析者グループ
         data_scientist_group = iam.Group(
@@ -356,55 +256,6 @@ class IamStack(core.Stack):
                         "elasticmapreduce:*",
                         "sagemaker:*",
                         "quicksight:*"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "s3:GetAccessPoint",
-                        "s3:GetLifecycleConfiguration",
-                        "s3:GetBucketTagging",
-                        "s3:GetInventoryConfiguration",
-                        "s3:GetObjectVersionTagging",
-                        "s3:ListBucketVersions",
-                        "s3:GetBucketLogging",
-                        "s3:ListBucket",
-                        "s3:GetAccelerateConfiguration",
-                        "s3:GetBucketPolicy",
-                        "s3:GetObjectVersionTorrent",
-                        "s3:GetObjectAcl",
-                        "s3:GetEncryptionConfiguration",
-                        "s3:GetBucketObjectLockConfiguration",
-                        "s3:GetBucketRequestPayment",
-                        "s3:GetAccessPointPolicyStatus",
-                        "s3:GetObjectVersionAcl",
-                        "s3:GetObjectTagging",
-                        "s3:GetMetricsConfiguration",
-                        "s3:HeadBucket",
-                        "s3:GetBucketPublicAccessBlock",
-                        "s3:GetBucketPolicyStatus",
-                        "s3:ListBucketMultipartUploads",
-                        "s3:GetObjectRetention",
-                        "s3:GetBucketWebsite",
-                        "s3:ListAccessPoints",
-                        "s3:ListJobs",
-                        "s3:GetBucketVersioning",
-                        "s3:GetBucketAcl",
-                        "s3:GetObjectLegalHold",
-                        "s3:GetBucketNotification",
-                        "s3:GetReplicationConfiguration",
-                        "s3:ListMultipartUploadParts",
-                        "s3:GetObject",
-                        "s3:GetObjectTorrent",
-                        "s3:GetAccountPublicAccessBlock",
-                        "s3:ListAllMyBuckets",
-                        "s3:DescribeJob",
-                        "s3:GetBucketCORS",
-                        "s3:GetAnalyticsConfiguration",
-                        "s3:GetObjectVersionForReplication",
-                        "s3:GetBucketLocation",
-                        "s3:GetAccessPointPolicy",
-                        "s3:GetObjectVersion"
                     ],
                     resources=["*"]
                 ),
