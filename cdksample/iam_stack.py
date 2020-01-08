@@ -30,6 +30,7 @@ class IamStack(core.Stack):
             self, 'SystemAdminGroup',
             group_name='SystemAdminGroup'
         )
+        system_admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
         # コスト管理用のインラインポリシー
         billing_admin_policy = iam.Policy(
             self, 'BillingAdminPolicy',
@@ -161,6 +162,7 @@ class IamStack(core.Stack):
             self, 'SecurityAuditGroup',
             group_name='SecurityAuditGroup'
         )
+        security_audit_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
         # セキュリティ監査者用のインラインポリシー
         system_admin_policy = iam.Policy(
             self, 'SecurityAudit',
@@ -245,6 +247,7 @@ class IamStack(core.Stack):
             self, 'DataScientistGroup',
             group_name='DataScientistGroup'
         )
+        data_scientist_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
         # 分析者用のインラインポリシー
         data_scientist_policy = iam.Policy(
             self, 'DataScientistPolicy',
@@ -338,36 +341,6 @@ class IamStack(core.Stack):
         data_scientist_policy.attach_to_group(data_scientist_group)
 
         ################
-        # IPアドレス制限
-        ################
-
-        # IPアドレス制限を行う管理ポリシー
-        ip_address_policy = iam.ManagedPolicy(
-            self, 'IpAddressPolicy',
-            managed_policy_name='IpAddressPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    actions=['*'],
-                    resources=['*'],
-                    conditions={
-                        'NotIpAddress': {
-                            'aws:SourceIp': [
-                                '0.0.0.0/0'
-                            ]
-                        }
-                    }
-                )
-            ]
-        )
-
-        # ポリシーをグループにアタッチ
-        # ip_address_policy.attach_to_group(admin_group)
-        ip_address_policy.attach_to_group(system_admin_group)
-        ip_address_policy.attach_to_group(security_audit_group)
-        ip_address_policy.attach_to_group(data_scientist_group)
-
-        ################
         # ユーザーの作成
         ################
 
@@ -422,6 +395,10 @@ class IamStack(core.Stack):
             user.add_to_group(data_scientist_group)
 
         self.output_props = props.copy()
+        self.output_props['admin_group'] = admin_group
+        self.output_props['system_admin_group'] = system_admin_group
+        self.output_props['security_audit_group'] = security_audit_group
+        self.output_props['data_scientist_group'] = data_scientist_group
 
     @property
     def outputs(self):

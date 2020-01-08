@@ -12,6 +12,10 @@ class ProxyStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['workspaces_vpc']
+        admin_group = props['admin_group']
+        system_admin_group = props['system_admin_group']
+        security_audit_group = props['security_audit_group']
+        data_scientist_group = props['data_scientist_group']
 
         # Proxy用のEIP
         eip = ec2.CfnEIP(self, 'EIP')
@@ -21,12 +25,14 @@ class ProxyStack(core.Stack):
         user_data = ec2.UserData.for_linux()
         user_data.add_commands('yum update -y')
         # EIPのアタッチを行う
+        # （参考）起動時に複数のEIPの中から一つを設定する
+        # https://dev.classmethod.jp/cloud/aws/choose-eip-from-addresspool/
         user_data.add_commands('eip_alloc_id={}'.format(eip_alloc_id))
         user_data.add_commands('instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)')
         user_data.add_commands('region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e "s/.$//")')
         user_data.add_commands('export AWS_DEFAULT_REGION=${region}')
         user_data.add_commands('aws ec2 associate-address --instance-id ${instance_id} --allocation-id ${eip_alloc_id}')
-        # プロキシのインストールと設定を行う
+        # Squidのインストールと設定を行う
         user_data.add_commands('yum install -y squid')
         user_data.add_commands("""cat <<EOF > /etc/squid/squid.conf
 # Define local networks
@@ -106,7 +112,7 @@ EOF""")
             ec2.Port.tcp(22)
         )
 
-        # ユーザーデータからEIPをアタッチするために必要なポリシーをインスタンスロールにアタッチ
+        # EIPをアソシエイトするために必要なポリシーをインスタンスロールにアタッチ
         proxy_asg.role.add_to_policy(
             statement=iam.PolicyStatement(
                 actions=[
@@ -115,6 +121,36 @@ EOF""")
                 resources=["*"]
             )
         )
+
+        ################
+        # IPアドレス制限
+        ################
+
+        # IPアドレス制限を行う管理ポリシー
+        ip_address_policy = iam.ManagedPolicy(
+            self, 'IpAddressPolicy',
+            managed_policy_name='IpAddressPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.DENY,
+                    not_actions=['iam:ChangePassword'],
+                    resources=['*'],
+                    conditions={
+                        'NotIpAddress': {
+                            'aws:SourceIp': [
+                                eip.ref
+                            ]
+                        }
+                    }
+                )
+            ]
+        )
+
+        # ポリシーをグループにアタッチ
+        # ip_address_policy.attach_to_group(admin_group)
+        ip_address_policy.attach_to_group(system_admin_group)
+        ip_address_policy.attach_to_group(security_audit_group)
+        ip_address_policy.attach_to_group(data_scientist_group)
 
         self.output_props = props.copy()
 
