@@ -1,7 +1,8 @@
 from aws_cdk import (
     core,
     aws_ec2 as ec2,
-    aws_autoscaling as autoscaling
+    aws_autoscaling as autoscaling,
+    aws_iam as iam
 )
 
 
@@ -12,9 +13,20 @@ class ProxyStack(core.Stack):
 
         vpc = props['workspaces_vpc']
 
+        # Proxy用のEIP
+        eip = ec2.CfnEIP(self, 'EIP')
+        eip_alloc_id = eip.attr_allocation_id
+
         # ユーザーデータ
         user_data = ec2.UserData.for_linux()
         user_data.add_commands('yum update -y')
+        # EIPのアタッチを行う
+        user_data.add_commands('eip_alloc_id={}'.format(eip_alloc_id))
+        user_data.add_commands('instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)')
+        user_data.add_commands('region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e "s/.$//")')
+        user_data.add_commands('export AWS_DEFAULT_REGION=${region}')
+        user_data.add_commands('aws ec2 associate-address --instance-id ${instance_id} --allocation-id ${eip_alloc_id}')
+        # プロキシのインストールと設定を行う
         user_data.add_commands('yum install -y squid')
         user_data.add_commands("""cat <<EOF > /etc/squid/squid.conf
 # Define local networks
@@ -92,6 +104,16 @@ EOF""")
         # セキュリティーグループの設定
         proxy_asg.connections.allow_from_any_ipv4(
             ec2.Port.tcp(22)
+        )
+
+        # ユーザーデータからEIPをアタッチするために必要なポリシーをインスタンスロールにアタッチ
+        proxy_asg.role.add_to_policy(
+            statement=iam.PolicyStatement(
+                actions=[
+                    "ec2:AssociateAddress"
+                ],
+                resources=["*"]
+            )
         )
 
         self.output_props = props.copy()
