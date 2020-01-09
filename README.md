@@ -114,3 +114,5 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 ## SAP
 
 SAP環境についてはクイックスタートを使ってマネージメントコンソールから構築します。
+
+- [AWS クラウドでの SAP HANA: クイックスタートリファレンスデプロイ](https://docs.aws.amazon.com/ja_jp/quickstart/latest/sap-hana/welcome.html)
