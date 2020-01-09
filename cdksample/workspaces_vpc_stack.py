@@ -41,6 +41,12 @@ class WorkSpacesVpcStack(core.Stack):
             vpc=vpc
         )
 
+        # WorkSpacesのインスタンスのためのセキュリティーグループ
+        workspaces_sg = ec2.SecurityGroup(
+            self, 'WorkSpacesSg',
+            vpc=vpc
+        )
+
         # CloudTrailのVPCエンドポイントの作成
         cloudtrail_endpoint = vpc.add_interface_endpoint(
             id='CloudTrailEndpoint',
@@ -77,6 +83,7 @@ class WorkSpacesVpcStack(core.Stack):
         self.output_props = props.copy()
         self.output_props['workspaces_vpc'] = vpc
         self.output_props['workspaces_endpoint_sg'] = endpoint_sg
+        self.output_props['workspaces_workspaces_sg'] = workspaces_sg
 
     @property
     def outputs(self):

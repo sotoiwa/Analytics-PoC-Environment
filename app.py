@@ -47,11 +47,11 @@ props = iam_stack.outputs
 bucket_stack = BucketStack(app, '{}-BucketStack'.format(props['prefix']), env=env, props=props)
 props = bucket_stack.outputs
 
-bastion_stack = BastionStack(app, '{}-BastionStack'.format(props['prefix']), env=env, props=props)
-props = bastion_stack.outputs
-
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(props['prefix']), env=env, props=props)
 props = proxy_stack.outputs
+
+bastion_stack = BastionStack(app, '{}-BastionStack'.format(props['prefix']), env=env, props=props)
+props = bastion_stack.outputs
 
 redshift_stack = RedShiftStack(app, '{}-RedShiftStack'.format(props['prefix']), env=env, props=props)
 props = redshift_stack.outputs

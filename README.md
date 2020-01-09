@@ -2,8 +2,17 @@
 
 ## 前提
 
-ローカルPCから実行する場合Node.jsとpythonの実行環境が必要です。Cloud9環境からの実行もおすすめです。
-AdministratorAccessを持つユーザーでの実行を想定しています。必要なクレデンシャルをローカルPCに配置するか、Cloud9環境のIAMロールに与えて下さい。
+ローカルPCから実行する場合Node.jsとPythonの実行環境が必要です。
+
+```
+brew install python
+brew install node
+brew install awscli
+brew install jq
+brew install git
+```
+
+Windowsの場合は環境のセットアップが面倒と思われるため、Cloud9環境からの実行がおすすめです。
 
 - [cloud9.md](cloud9.md)
 
@@ -131,3 +140,7 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 SAP環境についてはクイックスタートを使ってマネージメントコンソールから構築します。
 
 - [AWS クラウドでの SAP HANA: クイックスタートリファレンスデプロイ](https://docs.aws.amazon.com/ja_jp/quickstart/latest/sap-hana/welcome.html)
+
+## パスワードポリシーの設定
+
+- https://dev.classmethod.jp/cloud/aws/manage-iam-password-policy-via-cli/

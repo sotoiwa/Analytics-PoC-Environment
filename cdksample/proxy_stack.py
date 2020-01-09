@@ -12,10 +12,7 @@ class ProxyStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['workspaces_vpc']
-        admin_group = props['admin_group']
-        environment_admin_group = props['environment_admin_group']
-        security_audit_group = props['security_audit_group']
-        data_scientist_group = props['data_scientist_group']
+        workspaces_workspaces_sg = props['workspaces_workspaces_sg']
 
         # Proxy用のEIP
         # eip = ec2.CfnEIP(self, 'EIP')
@@ -114,6 +111,10 @@ EOF""")
             other=ec2.Peer.ipv4('10.1.5.0/24'),
             port_range=ec2.Port.tcp(3128)
         )
+        proxy_asg.connections.allow_from(
+            other=workspaces_workspaces_sg,
+            port_range=ec2.Port.tcp(3128)
+        )
 
         # EIPをアソシエイトするために必要なポリシーをインスタンスロールにアタッチ
         proxy_asg.role.add_to_policy(
@@ -126,6 +127,7 @@ EOF""")
         )
 
         self.output_props = props.copy()
+        self.output_props['workspaces_proxy_sg'] = proxy_asg.connections.security_groups[0]
 
     @property
     def outputs(self):
