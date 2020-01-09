@@ -44,9 +44,22 @@ pip install -r requirements.txt
 
 |パラメータ|説明|
 |---|---|
-|account|AWSアカウント。|
-|region|リージョン。|
+|account|AWSアカウント|
+|region|リージョン|
 |key_name|Proxyインスタンスに配置するキーペアの名前。|
+|admin_user_names|管理者ユーザーの名前のリスト|
+|environment_admin_user_names|環境管理者ユーザーの名前のリスト|
+|security_audit_user_names|セキュリティ監査者ユーザーの名前のリスト|
+|data_scientist_user_names|分析者ユーザーの名前のリスト|
+|redshift.master_user_password|edShiftのマスターユーザーのパスワード|
+
+（補足）RedShiftのマスターユーザーのパスワード要件
+
+- 値は 8 ～ 64 文字長である必要があります。
+- 値には、少なくとも 1 つの大文字が含まれている必要があります。
+- 値には、少なくとも 1 つの小文字が含まれている必要があります。
+- 値には、少なくとも 1 つの数字が含まれている必要があります。
+- マスターパスワードには、印刷可能な ASCII 文字 (ASCII コード 33-126) のみを含めることができます。ただし、'(一重引用符) 、” (二重引用符)、/、@、またはスペースは除きます。
 
 ### デプロイ
 
@@ -78,6 +91,18 @@ Proxyサーバーをデプロイします。
 
 ```
 cdk deploy *ProxyStack --require-approval never
+```
+
+RedShiftクラスターをデプロイします。
+
+```
+cdk deploy *RedShiftStack --require-approval never
+```
+
+SageMakerノートブックインスタンスをデプロイします。
+
+```
+cdk deploy *SageMakerStack --require-approval never
 ```
 
 ## WorkSpaces

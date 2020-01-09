@@ -11,6 +11,8 @@ from cdksample.iam_stack import IamStack
 from cdksample.bucket_stack import BucketStack
 from cdksample.proxy_stack import ProxyStack
 from cdksample.redshift_stack import RedShiftStack
+from cdksample.sagemaker_stack import SageMakerStack
+
 
 app = core.App()
 
@@ -49,5 +51,8 @@ props = proxy_stack.outputs
 
 redshift_stack = RedShiftStack(app, '{}-RedShiftStack'.format(props['prefix']), env=env, props=props)
 props = redshift_stack.outputs
+
+sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(props['prefix']), env=env, props=props)
+props = sagemaker_stack.outputs
 
 app.synth()

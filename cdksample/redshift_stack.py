@@ -16,6 +16,7 @@ class RedShiftStack(core.Stack):
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/
+        # https://aws.amazon.com/jp/blogs/news/build-fast-flexible-secure-machine-learning-platform-using-amazon-sagemaker-and-amazon-redshift/
 
         # IAMロール
         redshift_role = iam.Role(
@@ -33,17 +34,18 @@ class RedShiftStack(core.Stack):
 
         # バケットポリシー
 
-        # # クラスターパラメーターグループ
-        # cluster_parameter_group = redshift.CfnClusterParameterGroup(
-        #     self, 'RedShiftClusterParameterGroup',
-        #     description='RedShift Cluster Parameter group',
-        #     parameters=None
-        # )
+        # クラスターパラメーターグループ
+        cluster_parameter_group = redshift.CfnClusterParameterGroup(
+            self, 'RedShiftClusterParameterGroup',
+            description='RedShift Cluster parameter group',
+            parameter_group_family='redshift-1.0',
+            parameters=None
+        )
 
         # クラスターサブネットグループ
         cluster_subnet_group = redshift.CfnClusterSubnetGroup(
             self, 'RedShiftClusterSubnetGroup',
-            description='RedShift Cluster Subnet group',
+            description='RedShift Cluster subnet group',
             subnet_ids=vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids
         )
 
@@ -61,6 +63,7 @@ class RedShiftStack(core.Stack):
             iam_roles=[redshift_role.role_arn],
             vpc_security_group_ids=[redshift_sg.security_group_id],
             cluster_subnet_group_name=cluster_subnet_group.ref,
+            cluster_parameter_group_name=cluster_parameter_group.ref,
             publicly_accessible=False,
             allow_version_upgrade=True,
             automated_snapshot_retention_period=8,
