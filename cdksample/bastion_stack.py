@@ -4,7 +4,7 @@ from aws_cdk import (
 )
 
 
-class BasionStack(core.Stack):
+class BastionStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
@@ -14,8 +14,8 @@ class BasionStack(core.Stack):
         # EC2の作成
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_ec2/Instance.html
 
-        # Basion用EC2ホスト
-        basion_host = ec2.Instance(
+        # Bastion用EC2ホスト
+        bastion_host = ec2.Instance(
             self, 'BasionHost',
             instance_type=ec2.InstanceType('t2.small'),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2),
@@ -24,8 +24,8 @@ class BasionStack(core.Stack):
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
         )
 
-        # Basion用セキュリティーグループ
-        basion_host.connections.allow_from_any_ipv4(
+        # Bastion用セキュリティーグループ
+        bastion_host.connections.allow_from_any_ipv4(
             ec2.Port.tcp(22)
         )
 

@@ -10,6 +10,7 @@ from cdksample.audit_log_stack import AuditLogStack
 from cdksample.iam_stack import IamStack
 from cdksample.bucket_stack import BucketStack
 from cdksample.proxy_stack import ProxyStack
+from cdksample.bastion_stack import BastionStack
 from cdksample.redshift_stack import RedShiftStack
 from cdksample.sagemaker_stack import SageMakerStack
 
@@ -45,6 +46,9 @@ props = iam_stack.outputs
 
 bucket_stack = BucketStack(app, '{}-BucketStack'.format(props['prefix']), env=env, props=props)
 props = bucket_stack.outputs
+
+bastion_stack = BastionStack(app, '{}-BastionStack'.format(props['prefix']), env=env, props=props)
+props = bastion_stack.outputs
 
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(props['prefix']), env=env, props=props)
 props = proxy_stack.outputs

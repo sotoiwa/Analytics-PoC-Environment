@@ -51,3 +51,9 @@ node -v
 npm -v
 python --version
 ```
+
+## jqのインストール
+
+```
+sudo yum -y install jq
+```

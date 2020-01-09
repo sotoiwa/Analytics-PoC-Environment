@@ -342,6 +342,34 @@ class IamStack(core.Stack):
         data_scientist_policy.attach_to_group(data_scientist_group)
 
         ################
+        # IPアドレス制限
+        ################
+
+        # IPアドレス制限を行う管理ポリシー
+        ip_address_policy = iam.ManagedPolicy(
+            self, 'IpAddressPolicy',
+            managed_policy_name='IpAddressPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.DENY,
+                    not_actions=['iam:ChangePassword'],
+                    resources=['*'],
+                    conditions={
+                        'NotIpAddress': {
+                            'aws:SourceIp': self.node.try_get_context('nat_gateway_eips')
+                        }
+                    }
+                )
+            ]
+        )
+
+        # ポリシーをグループにアタッチ
+        # ip_address_policy.attach_to_group(admin_group)
+        ip_address_policy.attach_to_group(environment_admin_group)
+        ip_address_policy.attach_to_group(security_audit_group)
+        ip_address_policy.attach_to_group(data_scientist_group)
+
+        ################
         # キーの作成
         ################
 

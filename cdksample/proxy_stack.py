@@ -18,8 +18,8 @@ class ProxyStack(core.Stack):
         data_scientist_group = props['data_scientist_group']
 
         # Proxy用のEIP
-        eip = ec2.CfnEIP(self, 'EIP')
-        eip_alloc_id = eip.attr_allocation_id
+        # eip = ec2.CfnEIP(self, 'EIP')
+        # eip_alloc_id = eip.attr_allocation_id
 
         # ユーザーデータ
         user_data = ec2.UserData.for_linux()
@@ -27,11 +27,11 @@ class ProxyStack(core.Stack):
         # EIPのアタッチを行う
         # （参考）起動時に複数のEIPの中から一つを設定する
         # https://dev.classmethod.jp/cloud/aws/choose-eip-from-addresspool/
-        user_data.add_commands('eip_alloc_id={}'.format(eip_alloc_id))
-        user_data.add_commands('instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)')
-        user_data.add_commands('region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e "s/.$//")')
-        user_data.add_commands('export AWS_DEFAULT_REGION=${region}')
-        user_data.add_commands('aws ec2 associate-address --instance-id ${instance_id} --allocation-id ${eip_alloc_id}')
+        # user_data.add_commands('eip_alloc_id={}'.format(eip_alloc_id))
+        # user_data.add_commands('instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)')
+        # user_data.add_commands('region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e "s/.$//")')
+        # user_data.add_commands('export AWS_DEFAULT_REGION=${region}')
+        # user_data.add_commands('aws ec2 associate-address --instance-id ${instance_id} --allocation-id ${eip_alloc_id}')
         # Squidのインストールと設定を行う
         user_data.add_commands('yum install -y squid')
         user_data.add_commands("""cat <<EOF > /etc/squid/squid.conf
@@ -53,16 +53,11 @@ http_access deny CONNECT !SSL_ports
 http_access allow localhost manager
 http_access deny manager
 
-# We strongly recommend the following be uncommented to protect innocent
-# web applications running on the proxy server who think the only
-# one who can access services on "localhost" is a local user
-http_access deny to_localhost
-
-# Example rule allowing access from your local networks.
-# Adapt localnet in the ACL section to list your (internal) IP networks
-# from where browsing should be allowed
-http_access allow localnet
+# Allow access from localhost
 http_access allow localhost
+
+# Deny access from other than localnet
+http_access deny !localnet
 
 # include url white list 
 acl whitelist dstdomain "/etc/squid/whitelist" 
@@ -104,12 +99,20 @@ EOF""")
             desired_capacity=1,
             max_capacity=1,
             min_capacity=1,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE),
         )
 
         # セキュリティーグループの設定
         proxy_asg.connections.allow_from_any_ipv4(
             ec2.Port.tcp(22)
+        )
+        proxy_asg.connections.allow_from(
+            other=ec2.Peer.ipv4('10.1.4.0/24'),
+            port_range=ec2.Port.tcp(3128)
+        )
+        proxy_asg.connections.allow_from(
+            other=ec2.Peer.ipv4('10.1.5.0/24'),
+            port_range=ec2.Port.tcp(3128)
         )
 
         # EIPをアソシエイトするために必要なポリシーをインスタンスロールにアタッチ
@@ -121,36 +124,6 @@ EOF""")
                 resources=["*"]
             )
         )
-
-        ################
-        # IPアドレス制限
-        ################
-
-        # IPアドレス制限を行う管理ポリシー
-        ip_address_policy = iam.ManagedPolicy(
-            self, 'IpAddressPolicy',
-            managed_policy_name='IpAddressPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    not_actions=['iam:ChangePassword'],
-                    resources=['*'],
-                    conditions={
-                        'NotIpAddress': {
-                            'aws:SourceIp': [
-                                eip.ref
-                            ]
-                        }
-                    }
-                )
-            ]
-        )
-
-        # ポリシーをグループにアタッチ
-        # ip_address_policy.attach_to_group(admin_group)
-        ip_address_policy.attach_to_group(environment_admin_group)
-        ip_address_policy.attach_to_group(security_audit_group)
-        ip_address_policy.attach_to_group(data_scientist_group)
 
         self.output_props = props.copy()
 

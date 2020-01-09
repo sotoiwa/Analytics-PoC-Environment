@@ -69,6 +69,21 @@ VPCをデプロイします。
 cdk deploy *VpcStack *VpcPeeringStack --require-approval never
 ```
 
+WorkSpaces用のVPCのNAT GatewayにアタッチされているEIPのアドレスを、マネージメントコンソールまたはAWS CLIで確認します。
+
+```
+aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select( .Value | test("WorkSpaces") ) ] | length > 0 ) | .NatGatewayAddresses[].PublicIp'
+```
+
+このアドレスを`cdk.context.json`に記載します。
+
+```
+  "nat_gateway_eips": [
+    "18.176.193.136", 
+    "3.115.222.230"
+  ],
+```
+
 監査ログ設定をデプロイします。
 
 ```
