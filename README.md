@@ -1,10 +1,11 @@
-
 # CDKサンプルプロジェクト
 
 ## 前提
 
-ローカルPCから実行する場合Nodejsとpythonの実行環境が必要です。Cloud9環境からの実行もおすすめです。
+ローカルPCから実行する場合Node.jsとpythonの実行環境が必要です。Cloud9環境からの実行もおすすめです。
 AdministratorAccessを持つユーザーでの実行を想定しています。必要なクレデンシャルをローカルPCに配置するか、Cloud9環境のIAMロールに与えて下さい。
+
+- [cloud9.md](cloud9.md)
 
 ## 環境構築手順
 
@@ -49,6 +50,42 @@ pip install -r requirements.txt
 
 ### デプロイ
 
+VPCをデプロイします。
+
 ```
-cdk deploy *Stack
+cdk deploy *VpcStack *VpcPeeringStack --require-approval never
 ```
+
+監査ログ設定をデプロイします。
+
+```
+cdk deploy *AuditLogStack --require-approval never
+```
+
+暗号化用のキーとIAMユーザーをデプロイします。
+
+```
+cdk deploy *IamStack --require-approval never
+```
+
+データ保管用のバケットをデプロイします。
+
+```
+cdk deploy *BucketStack --require-approval never
+```
+
+Proxyサーバーをデプロイします。
+
+```
+cdk deploy *ProxyStack --require-approval never
+```
+
+## WorkSpaces
+
+WorkSpacesについてはCDKではなくマネージメントコンソールからの払い出しを行います。
+
+- [workspaces.md](workspaces.md)
+
+## SAP
+
+SAP環境についてはクイックスタートを使ってマネージメントコンソールから構築します。

@@ -13,7 +13,7 @@ class ProxyStack(core.Stack):
 
         vpc = props['workspaces_vpc']
         admin_group = props['admin_group']
-        system_admin_group = props['system_admin_group']
+        environment_admin_group = props['environment_admin_group']
         security_audit_group = props['security_audit_group']
         data_scientist_group = props['data_scientist_group']
 
@@ -148,7 +148,7 @@ EOF""")
 
         # ポリシーをグループにアタッチ
         # ip_address_policy.attach_to_group(admin_group)
-        ip_address_policy.attach_to_group(system_admin_group)
+        ip_address_policy.attach_to_group(environment_admin_group)
         ip_address_policy.attach_to_group(security_audit_group)
         ip_address_policy.attach_to_group(data_scientist_group)
 

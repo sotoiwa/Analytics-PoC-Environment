@@ -8,8 +8,8 @@ from cdksample.sap_vpc_stack import SapVpcStack
 from cdksample.vpc_peering_stack import VpcPeeringStack
 from cdksample.audit_log_stack import AuditLogStack
 from cdksample.iam_stack import IamStack
-from cdksample.basion_stack import BasionStack
 from cdksample.proxy_stack import ProxyStack
+from cdksample.bucket_stack import BucketStack
 
 app = core.App()
 
@@ -40,8 +40,8 @@ props = audit_log_stack.outputs
 iam_stack = IamStack(app, '{}-IamStack'.format(props['prefix']), env=env, props=props)
 props = iam_stack.outputs
 
-basion_stack = BasionStack(app, '{}-BasionStack'.format(props['prefix']), env=env, props=props)
-props = basion_stack.outputs
+bucket_stack = BucketStack(app, '{}-BucketStack'.format(props['prefix']), env=env, props=props)
+props = bucket_stack.outputs
 
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(props['prefix']), env=env, props=props)
 props = proxy_stack.outputs

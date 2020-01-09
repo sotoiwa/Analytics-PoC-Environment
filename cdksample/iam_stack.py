@@ -1,7 +1,8 @@
 from aws_cdk import (
     core,
     aws_iam as iam,
-    aws_secretsmanager as secretsmanager
+    aws_secretsmanager as secretsmanager,
+    aws_kms as kms
 )
 
 
@@ -24,13 +25,13 @@ class IamStack(core.Stack):
         )
         admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AdministratorAccess'))
 
-        # システム管理者グループ
-        # コスト管理、S3管理、環境管理のロールを兼ねるグループ
-        system_admin_group = iam.Group(
-            self, 'SystemAdminGroup',
-            group_name='SystemAdminGroup'
+        # 環境管理者グループ
+        # コスト管理、S3管理、システム管理のロールを兼ねるグループ
+        environment_admin_group = iam.Group(
+            self, 'EnvironmentAdminGroup',
+            group_name='EnvironmentAdminGroup'
         )
-        system_admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
+        environment_admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
         # コスト管理用のインラインポリシー
         billing_admin_policy = iam.Policy(
             self, 'BillingAdminPolicy',
@@ -51,7 +52,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        billing_admin_policy.attach_to_group(system_admin_group)
+        billing_admin_policy.attach_to_group(environment_admin_group)
         # S3管理用のインラインポリシー
         s3_admin_policy = iam.Policy(
             self, 'S3AdminPolicy',
@@ -62,10 +63,10 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        s3_admin_policy.attach_to_group(system_admin_group)
-        # 環境管理用のインラインポリシー
-        environment_admin_policy = iam.Policy(
-            self, 'EnvironmentAdminPolicy',
+        s3_admin_policy.attach_to_group(environment_admin_group)
+        # システム管理用のインラインポリシー
+        system_admin_policy = iam.Policy(
+            self, 'SystemAdminPolicy',
             statements=[
                 iam.PolicyStatement(
                     actions=[
@@ -154,7 +155,7 @@ class IamStack(core.Stack):
                 ),
             ]
         )
-        environment_admin_policy.attach_to_group(system_admin_group)
+        system_admin_policy.attach_to_group(environment_admin_group)
 
         # セキュリティ監査者グループ
         # セキュリティ監査とKMS管理のロールを兼ねるグループ
@@ -164,7 +165,7 @@ class IamStack(core.Stack):
         )
         security_audit_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
         # セキュリティ監査者用のインラインポリシー
-        system_admin_policy = iam.Policy(
+        security_audit_policy = iam.Policy(
             self, 'SecurityAudit',
             statements=[
                 iam.PolicyStatement(
@@ -229,7 +230,7 @@ class IamStack(core.Stack):
                 ),
             ]
         )
-        system_admin_policy.attach_to_group(security_audit_group)
+        security_audit_policy.attach_to_group(security_audit_group)
         # KMS管理用のポリシー
         kms_admin_policy = iam.Policy(
             self, 'KmsAdminPolicy',
@@ -341,6 +342,17 @@ class IamStack(core.Stack):
         data_scientist_policy.attach_to_group(data_scientist_group)
 
         ################
+        # キーの作成
+        ################
+
+        # キーを作成
+        data_key = kms.Key(
+            self, 'DataKey',
+            enable_key_rotation=True,
+            alias='data'
+        )
+
+        ################
         # ユーザーの作成
         ################
 
@@ -357,10 +369,12 @@ class IamStack(core.Stack):
                 password_reset_required=True
             )
             user.add_to_group(admin_group)
+            # キーポリシーとIAMポリシーを設定
+            data_key.grant_encrypt_decrypt(user)
 
-        # システム管理者ユーザーの作成
-        system_admin_user_names = ['system-admin-user']
-        for user_name in system_admin_user_names:
+        # 環境管理者ユーザーの作成
+        environment_admin_user_names = ['system-admin-user']
+        for user_name in environment_admin_user_names:
             secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
@@ -368,7 +382,9 @@ class IamStack(core.Stack):
                 password=secret.secret_value,
                 password_reset_required=True
             )
-            user.add_to_group(system_admin_group)
+            user.add_to_group(environment_admin_group)
+            # キーポリシーとIAMポリシーを設定
+            data_key.grant_encrypt_decrypt(user)
 
         # セキュリティー監査ユーザーの作成
         security_audit_user_names = ['security-audit-user']
@@ -393,12 +409,15 @@ class IamStack(core.Stack):
                 password_reset_required=True
             )
             user.add_to_group(data_scientist_group)
+            # キーポリシーとIAMポリシーを設定
+            data_key.grant_encrypt_decrypt(user)
 
         self.output_props = props.copy()
         self.output_props['admin_group'] = admin_group
-        self.output_props['system_admin_group'] = system_admin_group
+        self.output_props['environment_admin_group'] = environment_admin_group
         self.output_props['security_audit_group'] = security_audit_group
         self.output_props['data_scientist_group'] = data_scientist_group
+        self.output_props['data_key'] = data_key
 
     @property
     def outputs(self):
