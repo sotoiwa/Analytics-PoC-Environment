@@ -7,4 +7,5 @@ venv/
 .venv
 __pycache__/
 cdk.out/
+certificates/
 cdk.context.json

@@ -21,6 +21,7 @@ class ProxyStack(core.Stack):
         # ユーザーデータ
         user_data = ec2.UserData.for_linux()
         user_data.add_commands('yum update -y')
+
         # EIPのアタッチを行う
         # （参考）起動時に複数のEIPの中から一つを設定する
         # https://dev.classmethod.jp/cloud/aws/choose-eip-from-addresspool/
@@ -29,6 +30,7 @@ class ProxyStack(core.Stack):
         # user_data.add_commands('region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e "s/.$//")')
         # user_data.add_commands('export AWS_DEFAULT_REGION=${region}')
         # user_data.add_commands('aws ec2 associate-address --instance-id ${instance_id} --allocation-id ${eip_alloc_id}')
+
         # Squidのインストールと設定を行う
         user_data.add_commands('yum install -y squid')
         user_data.add_commands("""cat <<EOF > /etc/squid/squid.conf
@@ -104,27 +106,19 @@ EOF""")
             ec2.Port.tcp(22)
         )
         proxy_asg.connections.allow_from(
-            other=ec2.Peer.ipv4('10.1.4.0/24'),
-            port_range=ec2.Port.tcp(3128)
-        )
-        proxy_asg.connections.allow_from(
-            other=ec2.Peer.ipv4('10.1.5.0/24'),
-            port_range=ec2.Port.tcp(3128)
-        )
-        proxy_asg.connections.allow_from(
             other=workspaces_workspaces_sg,
             port_range=ec2.Port.tcp(3128)
         )
 
         # EIPをアソシエイトするために必要なポリシーをインスタンスロールにアタッチ
-        proxy_asg.role.add_to_policy(
-            statement=iam.PolicyStatement(
-                actions=[
-                    "ec2:AssociateAddress"
-                ],
-                resources=["*"]
-            )
-        )
+        # proxy_asg.role.add_to_policy(
+        #     statement=iam.PolicyStatement(
+        #         actions=[
+        #             "ec2:AssociateAddress"
+        #         ],
+        #         resources=["*"]
+        #     )
+        # )
 
         self.output_props = props.copy()
         self.output_props['workspaces_proxy_sg'] = proxy_asg.connections.security_groups[0]

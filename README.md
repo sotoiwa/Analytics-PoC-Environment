@@ -2,7 +2,7 @@
 
 ## 前提
 
-ローカルPCから実行する場合Node.jsとPythonの実行環境が必要です。
+ローカルPCから実行する場合Node.jsとPython等の実行環境が必要です。
 
 ```
 brew install python
@@ -14,7 +14,7 @@ brew install git
 
 Windowsの場合は環境のセットアップが面倒と思われるため、Cloud9環境からの実行がおすすめです。
 
-- [cloud9.md](cloud9.md)
+- [Cloud9環境のセットアップ](cloud9.md)
 
 ## 環境構築手順
 
@@ -133,7 +133,7 @@ cdk deploy *SageMakerStack --require-approval never
 
 WorkSpacesについてはCDKではなくマネージメントコンソールからの払い出しを行います。
 
-- [workspaces.md](workspaces.md)
+- [WorkSpacesのセットアップ](workspaces.md)
 
 ## SAP
 

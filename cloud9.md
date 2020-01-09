@@ -1,4 +1,4 @@
-# Cloud9
+# Cloud9環境のセットアップ
 
 cdkをCloud9から実行する場合の環境の払い出し手順を以下に記載します。
 
@@ -44,12 +44,13 @@ Cloud9は呼び出したAWSアカウントが利用可能な全てのAWSリソ�
 
 ## バージョン確認
 
-Node.js、npm、Pythonのバージョンを確認します。
+Node.js、Python等のバージョンを確認します。
 
 ```
 node -v
 npm -v
 python --version
+aws --version
 ```
 
 ## jqのインストール
