@@ -27,6 +27,7 @@ class BucketStack(core.Stack):
                 ignore_public_acls=True,
                 restrict_public_buckets=True
             ),
+            encryption=s3.BucketEncryption.KMS,
             encryption_key=data_key
         )
 

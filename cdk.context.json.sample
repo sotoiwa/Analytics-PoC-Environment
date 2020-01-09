@@ -3,5 +3,12 @@
   "aws-cdk:enableDiffNoFail": "true",
   "account": "",
   "region": "ap-northeast-1",
-  "key_name": ""
+  "key_name": "",
+  "admin_user_names": ["admin-user"],
+  "environment_admin_user_names": ["environment-admin-user"],
+  "security_audit_user_names": ["security-audit-user"],
+  "data_scientist_user_names": ["data-scientist-user"],
+  "redshift": {
+    "master_user_password": ""
+  }
 }

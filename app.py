@@ -8,8 +8,9 @@ from cdksample.sap_vpc_stack import SapVpcStack
 from cdksample.vpc_peering_stack import VpcPeeringStack
 from cdksample.audit_log_stack import AuditLogStack
 from cdksample.iam_stack import IamStack
-from cdksample.proxy_stack import ProxyStack
 from cdksample.bucket_stack import BucketStack
+from cdksample.proxy_stack import ProxyStack
+from cdksample.redshift_stack import RedShiftStack
 
 app = core.App()
 
@@ -45,5 +46,8 @@ props = bucket_stack.outputs
 
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(props['prefix']), env=env, props=props)
 props = proxy_stack.outputs
+
+redshift_stack = RedShiftStack(app, '{}-RedShiftStack'.format(props['prefix']), env=env, props=props)
+props = redshift_stack.outputs
 
 app.synth()

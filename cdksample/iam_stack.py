@@ -359,7 +359,7 @@ class IamStack(core.Stack):
         # 作成したユーザーのパスワードはSecretManagerに格納する
 
         # 全体管理者ユーザーの作成
-        admin_user_names = ['admin-user']
+        admin_user_names = self.node.try_get_context('admin_user_names')
         for user_name in admin_user_names:
             secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
@@ -373,7 +373,7 @@ class IamStack(core.Stack):
             data_key.grant_encrypt_decrypt(user)
 
         # 環境管理者ユーザーの作成
-        environment_admin_user_names = ['system-admin-user']
+        environment_admin_user_names = self.node.try_get_context('environment_admin_user_names')
         for user_name in environment_admin_user_names:
             secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
@@ -387,7 +387,7 @@ class IamStack(core.Stack):
             data_key.grant_encrypt_decrypt(user)
 
         # セキュリティー監査ユーザーの作成
-        security_audit_user_names = ['security-audit-user']
+        security_audit_user_names = self.node.try_get_context('security_audit_user_names')
         for user_name in security_audit_user_names:
             secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
@@ -399,7 +399,7 @@ class IamStack(core.Stack):
             user.add_to_group(security_audit_group)
 
         # 分析者ユーザーの作成
-        data_scientist_user_names = ['data-user']
+        data_scientist_user_names = self.node.try_get_context('data_scientist_user_names')
         for user_name in data_scientist_user_names:
             secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
