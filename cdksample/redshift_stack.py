@@ -26,7 +26,7 @@ class RedShiftStack(core.Stack):
 
         # セキュリティーグループ
         redshift_sg = ec2.SecurityGroup(
-            self, 'RedShiftSg',
+            self, 'RedShiftSecurityGroup',
             vpc=vpc
         )
 

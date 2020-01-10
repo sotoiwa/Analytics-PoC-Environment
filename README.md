@@ -143,4 +143,16 @@ SAP環境についてはクイックスタートを使ってマネージメン�
 
 ## パスワードポリシーの設定
 
-- https://dev.classmethod.jp/cloud/aws/manage-iam-password-policy-via-cli/
+以下のポリシーを設定する。
+
+```
+aws iam update-account-password-policy \
+  --minimum-password-length 8 \
+  --require-symbols \
+  --require-numbers \
+  --require-uppercase-characters \
+  --require-lowercase-characters \
+  --allow-users-to-change-password \
+  --max-password-age 30 \
+  --password-reuse-prevention 10
+```

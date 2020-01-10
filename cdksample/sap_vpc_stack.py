@@ -32,7 +32,7 @@ class SapVpcStack(core.Stack):
 
         # VPCエンドポイントのためのセキュリティーグループ
         endpoint_sg = ec2.SecurityGroup(
-            self, 'EndpointSg',
+            self, 'EndpointSecurityGroup',
             vpc=vpc
         )
 
@@ -56,14 +56,6 @@ class SapVpcStack(core.Stack):
         config_endpoint = vpc.add_interface_endpoint(
             id='ConfigEndpoint',
             service=ec2.InterfaceVpcEndpointAwsService.CONFIG,
-            private_dns_enabled=True,
-            security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
-        )
-        # CloudFormationのVPCエンドポイントの作成
-        cloudformatin_endpoint = vpc.add_interface_endpoint(
-            id='CloudFormationEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CLOUDFORMATION,
             private_dns_enabled=True,
             security_groups=[endpoint_sg],
             subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)

@@ -7,3 +7,4 @@ aws-cdk.aws_secretsmanager
 aws-cdk.aws_cloudtrail
 aws-cdk.aws_redshift
 aws-cdk.aws_sagemaker
+aws-cdk.aws_route53

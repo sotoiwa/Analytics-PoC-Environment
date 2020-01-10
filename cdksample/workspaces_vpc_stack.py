@@ -1,6 +1,7 @@
 from aws_cdk import (
     core,
-    aws_ec2 as ec2
+    aws_ec2 as ec2,
+    aws_route53 as route53
 )
 
 
@@ -37,13 +38,13 @@ class WorkSpacesVpcStack(core.Stack):
 
         # VPCエンドポイントのためのセキュリティーグループ
         endpoint_sg = ec2.SecurityGroup(
-            self, 'EndpointSg',
+            self, 'EndpointSecurityGroup',
             vpc=vpc
         )
 
         # WorkSpacesのインスタンスのためのセキュリティーグループ
         workspaces_sg = ec2.SecurityGroup(
-            self, 'WorkSpacesSg',
+            self, 'WorkSpacesSecurityGroup',
             vpc=vpc
         )
 
@@ -71,19 +72,19 @@ class WorkSpacesVpcStack(core.Stack):
             security_groups=[endpoint_sg],
             subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
         )
-        # CloudFormationのVPCエンドポイントの作成
-        cloudformatin_endpoint = vpc.add_interface_endpoint(
-            id='CloudFormationEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CLOUDFORMATION,
-            private_dns_enabled=True,
-            security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
+
+        # プライベートホストゾーンの作成
+        hosted_zone = route53.PrivateHostedZone(
+            self, 'HostedZone',
+            zone_name=self.node.try_get_context('domain'),
+            vpc=vpc
         )
 
         self.output_props = props.copy()
         self.output_props['workspaces_vpc'] = vpc
         self.output_props['workspaces_endpoint_sg'] = endpoint_sg
         self.output_props['workspaces_workspaces_sg'] = workspaces_sg
+        self.output_props['workspaces_hosted_zone'] = hosted_zone
 
     @property
     def outputs(self):

@@ -13,23 +13,38 @@ class ProxyStack(core.Stack):
 
         vpc = props['workspaces_vpc']
         workspaces_workspaces_sg = props['workspaces_workspaces_sg']
-
-        # Proxy用のEIP
-        # eip = ec2.CfnEIP(self, 'EIP')
-        # eip_alloc_id = eip.attr_allocation_id
+        workspaces_endpoint_sg = props['workspaces_endpoint_sg']
+        workspaces_hosted_zone = props['workspaces_hosted_zone']
 
         # ユーザーデータ
         user_data = ec2.UserData.for_linux()
         user_data.add_commands('yum update -y')
 
-        # EIPのアタッチを行う
-        # （参考）起動時に複数のEIPの中から一つを設定する
-        # https://dev.classmethod.jp/cloud/aws/choose-eip-from-addresspool/
-        # user_data.add_commands('eip_alloc_id={}'.format(eip_alloc_id))
-        # user_data.add_commands('instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)')
-        # user_data.add_commands('region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e "s/.$//")')
-        # user_data.add_commands('export AWS_DEFAULT_REGION=${region}')
-        # user_data.add_commands('aws ec2 associate-address --instance-id ${instance_id} --allocation-id ${eip_alloc_id}')
+        # IPアドレスをRoute53に登録する
+        user_data.add_commands('local_ip=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)')
+        user_data.add_commands('record=proxy.{}'.format(self.node.try_get_context('domain')))
+        user_data.add_commands("""cat <<EOF > /tmp/recordset.json 
+{
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "${record}",
+        "Type": "A",
+        "TTL": 600,
+        "ResourceRecords": [
+          {
+            "Value": "${local_ip}"
+          }
+        ]
+      }
+    }
+  ]
+}
+EOF""")
+        user_data.add_commands(
+            'aws route53 change-resource-record-sets --hosted-zone-id {} --change-batch file:///tmp/recordset.json'.format(
+                workspaces_hosted_zone.hosted_zone_id))
 
         # Squidのインストールと設定を行う
         user_data.add_commands('yum install -y squid')
@@ -87,6 +102,64 @@ EOF""")
         user_data.add_commands('systemctl enable squid')
         user_data.add_commands('systemctl restart squid')
 
+        # CloudWatchエージェントのインストールと設定を行う
+        user_data.add_commands(
+            'wget -nv https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm')
+        user_data.add_commands('sudo rpm -U ./amazon-cloudwatch-agent.rpm')
+        user_data.add_commands("""cat <<"EOF" > /opt/aws/amazon-cloudwatch-agent/bin/config.json
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "root"
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/squid/access.log",
+            "log_group_name": "SquidAccessLogs",
+            "log_stream_name": "{instance_id}"
+          },
+          {
+            "file_path": "/var/log/squid/cache.log",
+            "log_group_name": "SquidCacheLogs",
+            "log_stream_name": "{instance_id}"
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "append_dimensions": {
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+      "ImageId": "${aws:ImageId}",
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}"
+    },
+    "metrics_collected": {
+      "disk": {
+        "measurement": [
+          "used_percent"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ],
+        "metrics_collection_interval": 60
+      }
+    }
+  }
+}
+EOF""")
+        user_data.add_commands(
+            '/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s')
+
         # Proxy用AutoScalingGroup
         proxy_asg = autoscaling.AutoScalingGroup(
             self, 'ProxyAutoScalingGroup',
@@ -105,20 +178,31 @@ EOF""")
         proxy_asg.connections.allow_from_any_ipv4(
             ec2.Port.tcp(22)
         )
+        # WorksSpacesインスタンスからのアクセスを許可
         proxy_asg.connections.allow_from(
             other=workspaces_workspaces_sg,
             port_range=ec2.Port.tcp(3128)
         )
+        # VPCエンドポイントへのアクセスを許可
+        proxy_asg.connections.allow_to(
+            other=workspaces_endpoint_sg,
+            port_range=ec2.Port.all_traffic()
+        )
 
-        # EIPをアソシエイトするために必要なポリシーをインスタンスロールにアタッチ
-        # proxy_asg.role.add_to_policy(
-        #     statement=iam.PolicyStatement(
-        #         actions=[
-        #             "ec2:AssociateAddress"
-        #         ],
-        #         resources=["*"]
-        #     )
-        # )
+        # CloudWatchエージェント用のポリシーをアタッチ
+        proxy_asg.role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('CloudWatchAgentServerPolicy'))
+
+        # Route53にレコードを追加するためのポリシー
+        route53_policy = iam.Policy(
+            self, 'Route53Policy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=["route53:ChangeResourceRecordSets"],
+                    resources=[workspaces_hosted_zone.hosted_zone_arn]
+                )
+            ]
+        )
+        proxy_asg.role.attach_inline_policy(route53_policy)
 
         self.output_props = props.copy()
         self.output_props['workspaces_proxy_sg'] = proxy_asg.connections.security_groups[0]

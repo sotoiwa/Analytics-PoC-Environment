@@ -24,7 +24,7 @@ class SageMakerStack(core.Stack):
 
         # セキュリティーグループ
         notebook_sg = ec2.SecurityGroup(
-            self, 'NotebookSg',
+            self, 'NotebookSecurityGroup',
             vpc=vpc
         )
 

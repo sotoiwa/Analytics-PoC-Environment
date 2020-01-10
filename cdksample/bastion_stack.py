@@ -15,6 +15,12 @@ class BastionStack(core.Stack):
         # EC2の作成
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_ec2/Instance.html
 
+        # Bastion用セキュリティーグループ
+        bastion_sg = ec2.SecurityGroup(
+            self, 'BastionSecurityGroup',
+            vpc=vpc
+        )
+
         # Bastion用EC2ホスト
         bastion_host = ec2.Instance(
             self, 'BasionHost',
@@ -22,14 +28,16 @@ class BastionStack(core.Stack):
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2),
             key_name=self.node.try_get_context('key_name'),
             vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            security_group=bastion_sg
         )
 
-        # Bastion用セキュリティーグループ
-        bastion_host.connections.allow_from_any_ipv4(
+        # 外部からのSSHを許可
+        bastion_sg.connections.allow_from_any_ipv4(
             ec2.Port.tcp(22)
         )
-        bastion_host.connections.allow_to(
+        # ProxyインスタンスへのSSHを許可
+        bastion_sg.connections.allow_to(
             other=workspaces_proxy_sg,
             port_range=ec2.Port.tcp(22)
         )

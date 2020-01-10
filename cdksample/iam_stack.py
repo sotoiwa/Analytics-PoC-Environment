@@ -52,7 +52,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        billing_admin_policy.attach_to_group(environment_admin_group)
+        environment_admin_group.attach_inline_policy(billing_admin_policy)
         # S3管理用のインラインポリシー
         s3_admin_policy = iam.Policy(
             self, 'S3AdminPolicy',
@@ -63,7 +63,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        s3_admin_policy.attach_to_group(environment_admin_group)
+        environment_admin_group.attach_inline_policy(s3_admin_policy)
         # システム管理用のインラインポリシー
         system_admin_policy = iam.Policy(
             self, 'SystemAdminPolicy',
@@ -155,7 +155,7 @@ class IamStack(core.Stack):
                 ),
             ]
         )
-        system_admin_policy.attach_to_group(environment_admin_group)
+        environment_admin_group.attach_inline_policy(system_admin_policy)
 
         # セキュリティ監査者グループ
         # セキュリティ監査とKMS管理のロールを兼ねるグループ
@@ -230,7 +230,7 @@ class IamStack(core.Stack):
                 ),
             ]
         )
-        security_audit_policy.attach_to_group(security_audit_group)
+        security_audit_group.attach_inline_policy(security_audit_policy)
         # KMS管理用のポリシー
         kms_admin_policy = iam.Policy(
             self, 'KmsAdminPolicy',
@@ -241,7 +241,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        kms_admin_policy.attach_to_role(security_audit_group)
+        security_audit_group.attach_inline_policy(kms_admin_policy)
 
         # 分析者グループ
         data_scientist_group = iam.Group(
@@ -339,7 +339,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        data_scientist_policy.attach_to_group(data_scientist_group)
+        data_scientist_group.attach_inline_policy(data_scientist_policy)
 
         ################
         # IPアドレス制限

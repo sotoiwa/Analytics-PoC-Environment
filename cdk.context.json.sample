@@ -1,9 +1,11 @@
 {
   "@aws-cdk/core:enableStackNameDuplicates": "true",
   "aws-cdk:enableDiffNoFail": "true",
+  "stack_prefix": "Sample",
   "account": "",
   "region": "ap-northeast-1",
   "key_name": "",
+  "domain": "corp.example.com",
   "admin_user_names": ["admin-user"],
   "environment_admin_user_names": ["environment-admin-user"],
   "security_audit_user_names": ["security-audit-user"],
