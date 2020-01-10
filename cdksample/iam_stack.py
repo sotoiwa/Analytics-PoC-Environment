@@ -1,8 +1,7 @@
 from aws_cdk import (
     core,
     aws_iam as iam,
-    aws_secretsmanager as secretsmanager,
-    aws_kms as kms
+    aws_secretsmanager as secretsmanager
 )
 
 
@@ -23,38 +22,113 @@ class IamStack(core.Stack):
             self, 'AdminGroup',
             group_name='AdminGroup'
         )
-        admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AdministratorAccess'))
-
         # 環境管理者グループ
         # コスト管理、S3管理、システム管理のロールを兼ねるグループ
         environment_admin_group = iam.Group(
             self, 'EnvironmentAdminGroup',
             group_name='EnvironmentAdminGroup'
         )
-        environment_admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
-        # コスト管理用のインラインポリシー
-        billing_admin_policy = iam.Policy(
-            self, 'BillingAdminPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        "aws-portal:*Billing",
-                        "awsbillingconsole:*Billing",
-                        "aws-portal:*Usage",
-                        "awsbillingconsole:*Usage",
-                        "aws-portal:*PaymentMethods",
-                        "awsbillingconsole:*PaymentMethods",
-                        "budgets:ViewBudget",
-                        "budgets:ModifyBudget",
-                        "cur:*"
-                    ],
-                    resources=["*"]
-                )
-            ]
+        # セキュリティ監査者グループ
+        # セキュリティ監査とKMS管理のロールを兼ねるグループ
+        security_audit_group = iam.Group(
+            self, 'SecurityAuditGroup',
+            group_name='SecurityAuditGroup'
         )
-        environment_admin_group.attach_inline_policy(billing_admin_policy)
-        # S3管理用のインラインポリシー
-        s3_admin_policy = iam.Policy(
+        # 分析者グループ
+        data_scientist_group = iam.Group(
+            self, 'DataScientistGroup',
+            group_name='DataScientistGroup'
+        )
+
+        ################
+        # ユーザーの作成
+        ################
+
+        # 作成したユーザーのパスワードはSecretManagerに格納する
+
+        # data_keyの使用を許可するユーザーのリスト
+        data_key_encrypt_decrypt_users = []
+        # data_bucketの更新を許可するユーザーのリスト
+        data_bucket_read_write_users = []
+        # log_bucketの参照を許可するユーザーのリスト
+        log_bucket_read_users = []
+
+        # 全体管理者ユーザーの作成
+        admin_user_names = self.node.try_get_context('admin_user_names')
+        for user_name in admin_user_names:
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
+            user = iam.User(
+                self, user_name,
+                user_name=user_name,
+                password=secret.secret_value,
+                password_reset_required=True
+            )
+            user.add_to_group(admin_group)
+            # data_keyの使用を許可
+            data_key_encrypt_decrypt_users.append(user)
+            # data_bucketの更新を許可
+            data_bucket_read_write_users.append(user)
+
+        # 環境管理者ユーザーの作成
+        environment_admin_user_names = self.node.try_get_context('environment_admin_user_names')
+        for user_name in environment_admin_user_names:
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
+            user = iam.User(
+                self, user_name,
+                user_name=user_name,
+                password=secret.secret_value,
+                password_reset_required=True
+            )
+            user.add_to_group(environment_admin_group)
+            # data_keyの使用を許可
+            data_key_encrypt_decrypt_users.append(user)
+
+        # セキュリティー監査ユーザーの作成
+        security_audit_user_names = self.node.try_get_context('security_audit_user_names')
+        for user_name in security_audit_user_names:
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
+            user = iam.User(
+                self, user_name,
+                user_name=user_name,
+                password=secret.secret_value,
+                password_reset_required=True
+            )
+            user.add_to_group(security_audit_group)
+            # log_bucketの参照を許可
+            log_bucket_read_users.append(user)
+
+        # 分析者ユーザーの作成
+        data_scientist_user_names = self.node.try_get_context('data_scientist_user_names')
+        for user_name in data_scientist_user_names:
+            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
+            user = iam.User(
+                self, user_name,
+                user_name=user_name,
+                password=secret.secret_value,
+                password_reset_required=True
+            )
+            user.add_to_group(data_scientist_group)
+            # data_keyの使用を許可する
+            data_key_encrypt_decrypt_users.append(user)
+            # data_bucketの更新を許可
+            data_bucket_read_write_users.append(user)
+
+        ################
+        # 管理者グループ個別の権限設定
+        ################
+
+        # 管理者グループ
+        admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AdministratorAccess'))
+
+        ################
+        # 環境管理者グループ個別の権限設定
+        ################
+
+        # コスト管理用のAWS管理ポリシー
+        environment_admin_group.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name('job-function/Billing'))
+        # S3管理用のカスタマー管理ポリシー
+        s3_admin_policy = iam.ManagedPolicy(
             self, 'S3AdminPolicy',
             statements=[
                 iam.PolicyStatement(
@@ -63,9 +137,9 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        environment_admin_group.attach_inline_policy(s3_admin_policy)
-        # システム管理用のインラインポリシー
-        system_admin_policy = iam.Policy(
+        environment_admin_group.add_managed_policy(s3_admin_policy)
+        # システム管理用のカスタマー管理ポリシー
+        system_admin_policy = iam.ManagedPolicy(
             self, 'SystemAdminPolicy',
             statements=[
                 iam.PolicyStatement(
@@ -80,6 +154,15 @@ class IamStack(core.Stack):
                     resources=["*"]
                 ),
                 iam.PolicyStatement(
+                    effect=iam.Effect.DENY,
+                    actions=[
+                        "ec2:CreateTransitGatewayVpcAttachment",
+                        "ec2:AttachVpnGateway",
+                        "ec2:AttachInternetGateway"
+                    ],
+                    resources=["*"]
+                ),
+                iam.PolicyStatement(
                     actions=[
                         "cloudtrail:LookupEvents",
                         "cloudtrail:GetTrail",
@@ -155,17 +238,14 @@ class IamStack(core.Stack):
                 ),
             ]
         )
-        environment_admin_group.attach_inline_policy(system_admin_policy)
+        environment_admin_group.add_managed_policy(system_admin_policy)
 
-        # セキュリティ監査者グループ
-        # セキュリティ監査とKMS管理のロールを兼ねるグループ
-        security_audit_group = iam.Group(
-            self, 'SecurityAuditGroup',
-            group_name='SecurityAuditGroup'
-        )
-        security_audit_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
-        # セキュリティ監査者用のインラインポリシー
-        security_audit_policy = iam.Policy(
+        ################
+        # セキュリティ監査者グループ個別の権限設定
+        ################
+
+        # セキュリティ監査者用のカスタマー管理ポリシー
+        security_audit_policy = iam.ManagedPolicy(
             self, 'SecurityAudit',
             statements=[
                 iam.PolicyStatement(
@@ -178,61 +258,12 @@ class IamStack(core.Stack):
                         "guardduty:*"
                     ],
                     resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "s3:GetAccessPoint",
-                        "s3:GetLifecycleConfiguration",
-                        "s3:GetBucketTagging",
-                        "s3:GetInventoryConfiguration",
-                        "s3:GetObjectVersionTagging",
-                        "s3:ListBucketVersions",
-                        "s3:GetBucketLogging",
-                        "s3:ListBucket",
-                        "s3:GetAccelerateConfiguration",
-                        "s3:GetBucketPolicy",
-                        "s3:GetObjectVersionTorrent",
-                        "s3:GetObjectAcl",
-                        "s3:GetEncryptionConfiguration",
-                        "s3:GetBucketObjectLockConfiguration",
-                        "s3:GetBucketRequestPayment",
-                        "s3:GetAccessPointPolicyStatus",
-                        "s3:GetObjectVersionAcl",
-                        "s3:GetObjectTagging",
-                        "s3:GetMetricsConfiguration",
-                        "s3:HeadBucket",
-                        "s3:GetBucketPublicAccessBlock",
-                        "s3:GetBucketPolicyStatus",
-                        "s3:ListBucketMultipartUploads",
-                        "s3:GetObjectRetention",
-                        "s3:GetBucketWebsite",
-                        "s3:ListAccessPoints",
-                        "s3:ListJobs",
-                        "s3:GetBucketVersioning",
-                        "s3:GetBucketAcl",
-                        "s3:GetObjectLegalHold",
-                        "s3:GetBucketNotification",
-                        "s3:GetReplicationConfiguration",
-                        "s3:ListMultipartUploadParts",
-                        "s3:GetObject",
-                        "s3:GetObjectTorrent",
-                        "s3:GetAccountPublicAccessBlock",
-                        "s3:ListAllMyBuckets",
-                        "s3:DescribeJob",
-                        "s3:GetBucketCORS",
-                        "s3:GetAnalyticsConfiguration",
-                        "s3:GetObjectVersionForReplication",
-                        "s3:GetBucketLocation",
-                        "s3:GetAccessPointPolicy",
-                        "s3:GetObjectVersion"
-                    ],
-                    resources=["*"]
-                ),
+                )
             ]
         )
-        security_audit_group.attach_inline_policy(security_audit_policy)
-        # KMS管理用のポリシー
-        kms_admin_policy = iam.Policy(
+        security_audit_group.add_managed_policy(security_audit_policy)
+        # KMS管理用のカスタマー管理ポリシー
+        kms_admin_policy = iam.ManagedPolicy(
             self, 'KmsAdminPolicy',
             statements=[
                 iam.PolicyStatement(
@@ -241,114 +272,45 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        security_audit_group.attach_inline_policy(kms_admin_policy)
+        security_audit_group.add_managed_policy(kms_admin_policy)
 
-        # 分析者グループ
-        data_scientist_group = iam.Group(
-            self, 'DataScientistGroup',
-            group_name='DataScientistGroup'
-        )
-        data_scientist_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
-        # 分析者用のインラインポリシー
-        data_scientist_policy = iam.Policy(
+        ################
+        # 分析者グループ個別の権限設定
+        ################
+
+        # 分析者用のカスタマー管理ポリシー
+        data_scientist_policy = iam.ManagedPolicy(
             self, 'DataScientistPolicy',
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        "ec2:*",
                         "redshift:*",
                         "elasticmapreduce:*",
                         "sagemaker:*",
                         "quicksight:*"
                     ],
                     resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "cloudtrail:LookupEvents",
-                        "cloudtrail:GetTrail",
-                        "cloudtrail:ListTrails",
-                        "cloudtrail:ListPublicKeys",
-                        "cloudtrail:ListTags",
-                        "cloudtrail:GetTrailStatus",
-                        "cloudtrail:GetEventSelectors",
-                        "cloudtrail:GetInsightSelectors",
-                        "cloudtrail:DescribeTrails"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "cloudwatch:DescribeInsightRules",
-                        "cloudwatch:GetDashboard",
-                        "cloudwatch:GetInsightRuleReport",
-                        "cloudwatch:GetMetricData",
-                        "cloudwatch:GetMetricStatistics",
-                        "cloudwatch:ListMetrics",
-                        "cloudwatch:DescribeAnomalyDetectors",
-                        "cloudwatch:DescribeAlarmHistory",
-                        "cloudwatch:DescribeAlarmsForMetric",
-                        "cloudwatch:ListDashboards",
-                        "cloudwatch:ListTagsForResource",
-                        "cloudwatch:DescribeAlarms",
-                        "cloudwatch:GetMetricWidgetImage"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "logs:ListTagsLogGroup",
-                        "logs:DescribeQueries",
-                        "logs:GetLogRecord",
-                        "logs:DescribeLogGroups",
-                        "logs:DescribeLogStreams",
-                        "logs:DescribeSubscriptionFilters",
-                        "logs:StartQuery",
-                        "logs:DescribeMetricFilters",
-                        "logs:StopQuery",
-                        "logs:TestMetricFilter",
-                        "logs:GetLogDelivery",
-                        "logs:ListLogDeliveries",
-                        "logs:DescribeExportTasks",
-                        "logs:GetQueryResults",
-                        "logs:GetLogEvents",
-                        "logs:FilterLogEvents",
-                        "logs:GetLogGroupFields",
-                        "logs:DescribeResourcePolicies",
-                        "logs:DescribeDestinations"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "events:DescribeRule",
-                        "events:DescribePartnerEventSource",
-                        "events:DescribeEventSource",
-                        "events:ListEventBuses",
-                        "events:TestEventPattern",
-                        "events:DescribeEventBus",
-                        "events:ListPartnerEventSourceAccounts",
-                        "events:ListRuleNamesByTarget",
-                        "events:ListPartnerEventSources",
-                        "events:ListEventSources",
-                        "events:ListTagsForResource",
-                        "events:ListRules",
-                        "events:ListTargetsByRule"
-                    ],
-                    resources=["*"]
                 )
             ]
         )
-        data_scientist_group.attach_inline_policy(data_scientist_policy)
+        data_scientist_group.add_managed_policy(data_scientist_policy)
+
+        ################
+        # パスワード変更の許可
+        ################
+
+        # AWS管理ポリシーをグループにアタッチ
+        for group in [admin_group, environment_admin_group, security_audit_group, data_scientist_group]:
+            group.add_managed_policy(
+                iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
 
         ################
         # IPアドレス制限
         ################
 
-        # IPアドレス制限を行う管理ポリシー
+        # IPアドレス制限を行うカスタマー管理ポリシー
         ip_address_policy = iam.ManagedPolicy(
             self, 'IpAddressPolicy',
-            managed_policy_name='IpAddressPolicy',
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.DENY,
@@ -362,90 +324,18 @@ class IamStack(core.Stack):
                 )
             ]
         )
-
-        # ポリシーをグループにアタッチ
-        # ip_address_policy.attach_to_group(admin_group)
-        ip_address_policy.attach_to_group(environment_admin_group)
-        ip_address_policy.attach_to_group(security_audit_group)
-        ip_address_policy.attach_to_group(data_scientist_group)
-
-        ################
-        # キーの作成
-        ################
-
-        # キーを作成
-        data_key = kms.Key(
-            self, 'DataKey',
-            enable_key_rotation=True,
-            alias='data'
-        )
-
-        ################
-        # ユーザーの作成
-        ################
-
-        # 作成したユーザーのパスワードはSecretManagerに格納する
-
-        # 全体管理者ユーザーの作成
-        admin_user_names = self.node.try_get_context('admin_user_names')
-        for user_name in admin_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
-            user = iam.User(
-                self, user_name,
-                user_name=user_name,
-                password=secret.secret_value,
-                password_reset_required=True
-            )
-            user.add_to_group(admin_group)
-            # キーポリシーとIAMポリシーを設定
-            data_key.grant_encrypt_decrypt(user)
-
-        # 環境管理者ユーザーの作成
-        environment_admin_user_names = self.node.try_get_context('environment_admin_user_names')
-        for user_name in environment_admin_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
-            user = iam.User(
-                self, user_name,
-                user_name=user_name,
-                password=secret.secret_value,
-                password_reset_required=True
-            )
-            user.add_to_group(environment_admin_group)
-            # キーポリシーとIAMポリシーを設定
-            data_key.grant_encrypt_decrypt(user)
-
-        # セキュリティー監査ユーザーの作成
-        security_audit_user_names = self.node.try_get_context('security_audit_user_names')
-        for user_name in security_audit_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
-            user = iam.User(
-                self, user_name,
-                user_name=user_name,
-                password=secret.secret_value,
-                password_reset_required=True
-            )
-            user.add_to_group(security_audit_group)
-
-        # 分析者ユーザーの作成
-        data_scientist_user_names = self.node.try_get_context('data_scientist_user_names')
-        for user_name in data_scientist_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
-            user = iam.User(
-                self, user_name,
-                user_name=user_name,
-                password=secret.secret_value,
-                password_reset_required=True
-            )
-            user.add_to_group(data_scientist_group)
-            # キーポリシーとIAMポリシーを設定
-            data_key.grant_encrypt_decrypt(user)
+        # カスタマー管理ポリシーをグループにアタッチ
+        for group in [admin_group, environment_admin_group, security_audit_group, data_scientist_group]:
+            group.add_managed_policy(ip_address_policy)
 
         self.output_props = props.copy()
         self.output_props['admin_group'] = admin_group
         self.output_props['environment_admin_group'] = environment_admin_group
         self.output_props['security_audit_group'] = security_audit_group
         self.output_props['data_scientist_group'] = data_scientist_group
-        self.output_props['data_key'] = data_key
+        self.output_props['log_bucket_read_users'] = log_bucket_read_users
+        self.output_props['data_key_encrypt_decrypt_users'] = data_key_encrypt_decrypt_users
+        self.output_props['data_bucket_read_write_users'] = data_bucket_read_write_users
 
     @property
     def outputs(self):

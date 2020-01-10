@@ -93,16 +93,16 @@ aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select(
   ],
 ```
 
+IAMユーザーをデプロイします。
+
+```
+cdk deploy *IamStack --require-approval never
+```
+
 監査ログ設定をデプロイします。
 
 ```
 cdk deploy *AuditLogStack --require-approval never
-```
-
-暗号化用のキーとIAMユーザーをデプロイします。
-
-```
-cdk deploy *IamStack --require-approval never
 ```
 
 データ保管用のバケットをデプロイします。
@@ -111,10 +111,10 @@ cdk deploy *IamStack --require-approval never
 cdk deploy *BucketStack --require-approval never
 ```
 
-Proxyサーバーをデプロイします。
+Proxyサーバーと踏み台サーバーをデプロイします。
 
 ```
-cdk deploy *ProxyStack --require-approval never
+cdk deploy *ProxyStack *BasionStack --require-approval never
 ```
 
 RedShiftクラスターをデプロイします。

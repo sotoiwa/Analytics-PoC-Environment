@@ -22,7 +22,7 @@ class ProxyStack(core.Stack):
 
         # IPアドレスをRoute53に登録する
         user_data.add_commands('local_ip=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)')
-        user_data.add_commands('record=proxy.{}'.format(self.node.try_get_context('domain')))
+        user_data.add_commands('record=proxy.{}'.format(self.node.try_get_context('hosted_zone')))
         user_data.add_commands("""cat <<EOF > /tmp/recordset.json 
 {
   "Changes": [
