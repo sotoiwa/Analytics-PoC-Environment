@@ -244,4 +244,3 @@ WorkSpacesクライアントを起動します。
 ![](images/workspaces05.png)
 
 1. `https://<アカウントID>.signin.aws.amazon.com/console`にアクセスし、アクセスできることを確認します。
-
