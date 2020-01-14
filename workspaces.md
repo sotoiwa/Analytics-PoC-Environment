@@ -169,10 +169,11 @@ openssl pkcs12 -export -inkey hogehoge-key.pem -in hogehoge.pem -certfile ca.pem
   |信頼された MacOS デバイスのみに WorkSpaces へのアクセスを許可|チェックする||
   |その他のプラットフォーム|ブロック||
 
-![](images/workspaces02.png)
-
 1. *ルート証明書1*の*インポート*をクリックします。
 1. `ca.pem`の内容をペーストし、*インポート*をクリックします。
+1. 内容を確認し、*更新と終了*をクリックします。 
+
+![](images/workspaces02.png)
 
 ## WorkSpacesの起動
 
