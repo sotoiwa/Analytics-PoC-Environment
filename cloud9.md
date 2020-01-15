@@ -53,8 +53,26 @@ python --version
 aws --version
 ```
 
-## jqのインストール
+## AWS CLIの初期設定
+
+画面下部のターミナルから、下記のコマンドを実行し、AWS CLIにリージョンを指定します。
 
 ```
+$ aws configure
+AWS Access Key ID [None]: <空ENTER>
+AWS Secret Access Key [None]: <空ENTER>
+Default region name [None]: ap-notheast-1
+Default output format [None]: <空ENTER>
+```
+
+## 追加ソフトウェアのインストール
+
+```
+# jq
 sudo yum -y install jq
+# cfssl
+wget https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssl_1.4.1_linux_amd64
+wget https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssljson_1.4.1_linux_amd64
+chmod +x cfssl cfssljson
+sudo mv cfssl cfssljson /usr/local/bin/
 ```

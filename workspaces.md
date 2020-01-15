@@ -45,11 +45,20 @@
 
 ## クライアント証明書の作成
 
-ローカルPC上で、[cfssl](https://github.com/cloudflare/cfssl)を使って、オレオレ認証局と、オレオレ認証局が署名したクライアント証明書を作成します。
+[cfssl](https://github.com/cloudflare/cfssl)を使って、オレオレ認証局と、オレオレ認証局が署名したクライアント証明書を作成します。
+cfsslをまだインストールしていない場合はインストールします。
 
 ```
+# Macの場合
 brew install cfssl
+# Linuxの場合
+wget https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssl_1.4.1_linux_amd64
+wget https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssljson_1.4.1_linux_amd64
+chmod +x cfssl cfssljson
+sudo mv cfssl cfssljson /usr/local/bin/
+# バージョン確認
 cfssl version
+# 次のステップに備えてディレクトリを移動
 cd certificates
 ```
 
@@ -60,6 +69,7 @@ workspacesというプロファイルを定義し、このCAが署名する証�
 後でCAから証明書を発行するときにこの設定ファイルとプロファイルを指定します。
 
 ```
+cd certificates
 cat > ca-config.json <<EOF
 {
   "signing": {
@@ -97,9 +107,9 @@ cat > ca-csr.json <<EOF
 EOF
 ```
 
-CA秘密鍵（ca-key.pem）とCA証明書（ca.pem）を作成します。
-このとき証明書署名要求（ca.csr）も作成されます。
-前半のcfssl gencertコマンドが秘密鍵とCSRと証明書を作成し、出力されたjsonをcfssljsonコマンドがファイルにしています。
+CA秘密鍵（`ca-key.pem`）とCA証明書（`ca.pem`）を作成します。
+このとき証明書署名要求（`ca.csr`）も作成されます。
+前半の`cfssl gencert`コマンドが秘密鍵とCSRと証明書を作成し、出力されたjsonを`cfssljson`コマンドがファイルにしています。
 
 ```
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca
