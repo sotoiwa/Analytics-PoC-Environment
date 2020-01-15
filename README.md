@@ -2,7 +2,9 @@
 
 ## 前提
 
-ローカルPCから実行する場合Node.jsとPython等の実行環境が必要です。
+AWSアカウントが作成済みで、管理者権限を持つIAMユーザーが必要です。
+
+ローカルPCからデプロイを実行する場合Node.jsとPython等の実行環境が必要です。
 
 ```
 brew install python
@@ -16,7 +18,7 @@ Windowsの場合は環境のセットアップが面倒と思われるため、C
 
 - [Cloud9環境のセットアップ](cloud9.md)
 
-## 環境構築手順
+## 環境デプロイ手順
 
 ### CDKのインストール
 
@@ -50,6 +52,7 @@ pip install -r requirements.txt
 
 `cdk.context.json.sample`を`cdk.context.json`としてコピーします。
 以下パラメータを自分の環境に合わせてカスタマイズします。
+デプロイ先のリージョンにキーペアが必要なので、マネージメントコンソールから作成して下さい。
 
 |パラメータ|説明|
 |---|---|
@@ -60,7 +63,7 @@ pip install -r requirements.txt
 |environment_admin_user_names|環境管理者ユーザーの名前のリスト|
 |security_audit_user_names|セキュリティ監査者ユーザーの名前のリスト|
 |data_scientist_user_names|分析者ユーザーの名前のリスト|
-|redshift.master_user_password|edShiftのマスターユーザーのパスワード|
+|redshift.master_user_password|RedShiftのマスターユーザーのパスワード|
 
 （補足）RedShiftのマスターユーザーのパスワード要件
 
