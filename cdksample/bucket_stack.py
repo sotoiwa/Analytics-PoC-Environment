@@ -31,7 +31,6 @@ class BucketStack(core.Stack):
         # キーを使って暗号化・復号できるカスタマー管理ポリシー
         data_key_encrypt_decrypt_policy = iam.ManagedPolicy(
             self, 'DataKeyEncryptDecryptPolicy',
-            managed_policy_name='DataKeyEncryptDecryptPolicy',
             statements=[
                 iam.PolicyStatement(
                     actions=[

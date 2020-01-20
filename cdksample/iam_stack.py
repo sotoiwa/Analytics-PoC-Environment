@@ -156,9 +156,12 @@ class IamStack(core.Stack):
                 iam.PolicyStatement(
                     effect=iam.Effect.DENY,
                     actions=[
-                        "ec2:CreateTransitGatewayVpcAttachment",
+                        "ec2:*Vpc*",
                         "ec2:AttachVpnGateway",
-                        "ec2:AttachInternetGateway"
+                        "ec2:DetachVpnGateway",
+                        "ec2:CreateInternetGateway",
+                        "ec2:ModifySnapshotAttribute",
+                        "ec2:ModifyImageAttribute"
                     ],
                     resources=["*"]
                 ),
@@ -296,13 +299,47 @@ class IamStack(core.Stack):
         data_scientist_group.add_managed_policy(data_scientist_policy)
 
         ################
-        # パスワード変更の許可
+        # 自身のパスワードとMFAの設定を許可
         ################
 
-        # AWS管理ポリシーをグループにアタッチ
+        # パスワードとMFA設定用ポリシー
+        password_mfa_policy = iam.ManagedPolicy(
+            self, 'PasswordMfaPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "iam:ChangePassword",
+                        "iam:CreateAccessKey",
+                        "iam:CreateVirtualMFADevice",
+                        "iam:DeactivateMFADevice",
+                        "iam:DeleteAccessKey",
+                        "iam:DeleteVirtualMFADevice",
+                        "iam:EnableMFADevice",
+                        "iam:GetAccountPasswordPolicy",
+                        "iam:UpdateAccessKey",
+                        "iam:UpdateSigningCertificate",
+                        "iam:UploadSigningCertificate",
+                        "iam:UpdateLoginProfile",
+                        "iam:ResyncMFADevice"
+                    ],
+                    resources=[
+                        'arn:aws:iam::{}:user/${{aws:username}}'.format(self.node.try_get_context('account')),
+                        'arn:aws:iam::{}:mfa/${{aws:username}}'.format(self.node.try_get_context('account'))
+                    ]
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "iam:Get*",
+                        "iam:List*"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+
+        # カスタマー管理ポリシーをグループにアタッチ
         for group in [admin_group, environment_admin_group, security_audit_group, data_scientist_group]:
-            group.add_managed_policy(
-                iam.ManagedPolicy.from_aws_managed_policy_name('IAMUserChangePassword'))
+            group.add_managed_policy(password_mfa_policy)
 
         ################
         # IPアドレス制限
