@@ -61,7 +61,7 @@ class BucketStack(core.Stack):
                     "kms:ReEncrypt*",
                     "kms:GenerateDataKey*"
                 ],
-                resources=["*"]
+                resources=['*']
             )
         )
 
@@ -72,7 +72,10 @@ class BucketStack(core.Stack):
         # データ用のS3バケット
         data_bucket = s3.Bucket(
             self, 'DataBucket',
-            bucket_name='data-{}'.format(self.node.try_get_context('account')),
+            bucket_name='data-{}-{}'.format(
+                self.node.try_get_context('account'),
+                self.node.try_get_context('bucket_suffix'),
+            ),
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.KMS,
             encryption_key=data_key
@@ -93,7 +96,7 @@ class BucketStack(core.Stack):
                 ],
                 resources=[
                     data_bucket.bucket_arn,
-                    data_bucket.arn_for_objects("*")
+                    data_bucket.arn_for_objects('*')
                 ]
             )
         )

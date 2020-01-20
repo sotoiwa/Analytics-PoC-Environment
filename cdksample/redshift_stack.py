@@ -2,7 +2,6 @@ from aws_cdk import (
     core,
     aws_ec2 as ec2,
     aws_iam as iam,
-    aws_secretsmanager as secretsmanager,
     aws_redshift as redshift
 )
 
@@ -30,10 +29,6 @@ class RedShiftStack(core.Stack):
             vpc=vpc
         )
 
-        # ログ用のバケット
-
-        # バケットポリシー
-
         # クラスターパラメーターグループ
         cluster_parameter_group = redshift.CfnClusterParameterGroup(
             self, 'RedShiftClusterParameterGroup',
@@ -52,13 +47,13 @@ class RedShiftStack(core.Stack):
         # クラスター
         cluster = redshift.CfnCluster(
             self, 'RedShiftCluster',
-            cluster_type='multi-node',
-            number_of_nodes=2,
-            node_type='dc2.large',
-            cluster_identifier='redshift-cluster',
-            db_name='dev',
-            port=5439,
-            master_username='awsuser',
+            cluster_type=self.node.try_get_context('redshift')['cluster_type'],
+            number_of_nodes=self.node.try_get_context('redshift')['number_of_nodes'],
+            node_type=self.node.try_get_context('redshift')['node_type'],
+            cluster_identifier=self.node.try_get_context('redshift')['cluster_identifier'],
+            db_name=self.node.try_get_context('redshift')['db_name'],
+            port=self.node.try_get_context('redshift')['port'],
+            master_username=self.node.try_get_context('redshift')['master_username'],
             master_user_password=self.node.try_get_context('redshift')['master_user_password'],
             iam_roles=[redshift_role.role_arn],
             vpc_security_group_ids=[redshift_sg.security_group_id],
@@ -66,9 +61,16 @@ class RedShiftStack(core.Stack):
             cluster_parameter_group_name=cluster_parameter_group.ref,
             publicly_accessible=False,
             allow_version_upgrade=True,
-            automated_snapshot_retention_period=8,
+            automated_snapshot_retention_period=self.node.try_get_context('redshift')[
+                'automated_snapshot_retention_period'],
             encrypted=False,
-            logging_properties=None
+            logging_properties={
+                "bucketName": "log-{}-{}".format(
+                    self.node.try_get_context('account'),
+                    self.node.try_get_context('bucket_suffix'),
+                ),
+                "s3KeyPrefix": "RedShiftLogs"
+            }
         )
 
         self.output_props = props.copy()

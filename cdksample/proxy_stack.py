@@ -117,13 +117,18 @@ EOF""")
       "files": {
         "collect_list": [
           {
+            "file_path": "/var/log/messages",
+            "log_group_name": "ProxyMessages",
+            "log_stream_name": "{instance_id}"
+          },
+          {
             "file_path": "/var/log/squid/access.log",
-            "log_group_name": "SquidAccessLogs",
+            "log_group_name": "ProxyAccessLogs",
             "log_stream_name": "{instance_id}"
           },
           {
             "file_path": "/var/log/squid/cache.log",
-            "log_group_name": "SquidCacheLogs",
+            "log_group_name": "ProxyCacheLogs",
             "log_stream_name": "{instance_id}"
           }
         ]
@@ -168,7 +173,6 @@ EOF""")
             key_name=self.node.try_get_context('key_name'),
             vpc=vpc,
             user_data=user_data,
-            desired_capacity=1,
             max_capacity=1,
             min_capacity=1,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE),

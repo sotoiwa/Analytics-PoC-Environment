@@ -125,7 +125,7 @@ cdk deploy *BucketStack --require-approval never
 Proxyサーバーと踏み台サーバーをデプロイします。
 
 ```
-cdk deploy *ProxyStack *BasionStack --require-approval never
+cdk deploy *ProxyStack *BastionStack --require-approval never
 ```
 
 RedShiftクラスターをデプロイします。

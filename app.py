@@ -2,6 +2,7 @@
 
 from aws_cdk import core
 
+from cdksample.test_stack import TestStack
 from cdksample.workspaces_vpc_stack import WorkSpacesVpcStack
 from cdksample.analytics_vpc_stack import AnalyticsVpcStack
 from cdksample.sap_vpc_stack import SapVpcStack
@@ -22,6 +23,9 @@ env = core.Environment(
     region=app.node.try_get_context('region')
 )
 props = dict()
+
+test_stack = TestStack(app, '{}-TestStack'.format(prefix), env=env, props=props)
+props = test_stack.outputs
 
 workspaces_vpc_stack = WorkSpacesVpcStack(app, '{}-WorkSpacesVpcStack'.format(prefix), env=env, props=props)
 props = workspaces_vpc_stack.outputs

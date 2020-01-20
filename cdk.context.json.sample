@@ -2,6 +2,7 @@
   "@aws-cdk/core:enableStackNameDuplicates": "true",
   "aws-cdk:enableDiffNoFail": "true",
   "stack_prefix": "Sample",
+  "bucket_suffix": "dev",
   "account": "",
   "region": "ap-northeast-1",
   "key_name": "",
@@ -14,6 +15,14 @@
   "security_audit_user_names": ["security-audit-user"],
   "data_scientist_user_names": ["data-scientist-user"],
   "redshift": {
-    "master_user_password": ""
+    "cluster_type": "multi-node",
+    "number_of_nodes": 6,
+    "node_type": "dc2.large",
+    "cluster_identifier": "redshift-cluster",
+    "db_name": "dev",
+    "port": 5439,
+    "master_username": "awsuser",
+    "master_user_password": "",
+    "automated_snapshot_retention_period": 8
   }
 }
