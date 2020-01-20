@@ -48,13 +48,13 @@ class WorkSpacesVpcStack(core.Stack):
             vpc=vpc
         )
 
-        # CloudTrailのVPCエンドポイントの作成
-        cloudtrail_endpoint = vpc.add_interface_endpoint(
-            id='CloudTrailEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CLOUDTRAIL,
+        # CloudWatchのVPCエンドポイントの作成
+        cloudwatch_endpoint = vpc.add_interface_endpoint(
+            id='CloudWatchEndpoint',
+            service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
             private_dns_enabled=True,
             security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
+            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
         )
         # CloudWatch LogsのVPCエンドポイントの作成
         cloudwatch_logs_endpoint = vpc.add_interface_endpoint(
@@ -62,15 +62,7 @@ class WorkSpacesVpcStack(core.Stack):
             service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             private_dns_enabled=True,
             security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
-        )
-        # ConfigのVPCエンドポイントの作成
-        config_endpoint = vpc.add_interface_endpoint(
-            id='ConfigEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CONFIG,
-            private_dns_enabled=True,
-            security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
+            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
         )
 
         # プライベートホストゾーンの作成

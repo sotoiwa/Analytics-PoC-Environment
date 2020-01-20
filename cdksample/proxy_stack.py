@@ -12,9 +12,9 @@ class ProxyStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['workspaces_vpc']
-        workspaces_workspaces_sg = props['workspaces_workspaces_sg']
-        workspaces_endpoint_sg = props['workspaces_endpoint_sg']
-        workspaces_hosted_zone = props['workspaces_hosted_zone']
+        workspaces_sg = props['workspaces_workspaces_sg']
+        endpoint_sg = props['workspaces_endpoint_sg']
+        hosted_zone = props['workspaces_hosted_zone']
 
         # ユーザーデータ
         user_data = ec2.UserData.for_linux()
@@ -44,7 +44,7 @@ class ProxyStack(core.Stack):
 EOF""")
         user_data.add_commands(
             'aws route53 change-resource-record-sets --hosted-zone-id {} --change-batch file:///tmp/recordset.json'.format(
-                workspaces_hosted_zone.hosted_zone_id))
+                hosted_zone.hosted_zone_id))
 
         # Squidのインストールと設定を行う
         user_data.add_commands('yum install -y squid')
@@ -184,12 +184,12 @@ EOF""")
         )
         # WorksSpacesインスタンスからのアクセスを許可
         proxy_asg.connections.allow_from(
-            other=workspaces_workspaces_sg,
+            other=workspaces_sg,
             port_range=ec2.Port.tcp(3128)
         )
         # VPCエンドポイントへのアクセスを許可
         proxy_asg.connections.allow_to(
-            other=workspaces_endpoint_sg,
+            other=endpoint_sg,
             port_range=ec2.Port.all_traffic()
         )
 
@@ -202,7 +202,7 @@ EOF""")
             statements=[
                 iam.PolicyStatement(
                     actions=["route53:ChangeResourceRecordSets"],
-                    resources=[workspaces_hosted_zone.hosted_zone_arn]
+                    resources=[hosted_zone.hosted_zone_arn]
                 )
             ]
         )

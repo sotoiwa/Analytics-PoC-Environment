@@ -45,6 +45,12 @@ class AuditLogStack(core.Stack):
             enable_file_validation=True,
             send_to_cloud_watch_logs=True
         )
+        
+        # データ用のバケットについてオブジェクトレベルのロギングを有効化
+        trail.add_s3_event_selector(['arn:aws:s3:::data-{}-{}/'.format(
+            self.node.try_get_context('account'),
+            self.node.try_get_context('bucket_suffix')
+        )])
 
         # VPCフローログ用のバケットポリシーを設定する
         # IAMユーザー向けのポリシーを追加すると消えてしまった（バグ？）ので明示的に追加している

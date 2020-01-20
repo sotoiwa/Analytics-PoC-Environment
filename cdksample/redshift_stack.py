@@ -6,12 +6,13 @@ from aws_cdk import (
 )
 
 
-class RedShiftStack(core.Stack):
+class RedshiftStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         vpc = props['analytics_vpc']
+        endpoint_sg = props['analytics_endpoint_sg']
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/
@@ -19,34 +20,43 @@ class RedShiftStack(core.Stack):
 
         # IAMロール
         redshift_role = iam.Role(
-            self, 'RedShiftRole',
+            self, 'RedshiftRole',
             assumed_by=iam.ServicePrincipal('redshift.amazonaws.com')
         )
 
         # セキュリティーグループ
         redshift_sg = ec2.SecurityGroup(
-            self, 'RedShiftSecurityGroup',
+            self, 'RedshiftSecurityGroup',
             vpc=vpc
+        )
+        redshift_sg.connections.allow_to(
+            other=endpoint_sg,
+            port_range=ec2.Port.all_traffic()
         )
 
         # クラスターパラメーターグループ
         cluster_parameter_group = redshift.CfnClusterParameterGroup(
-            self, 'RedShiftClusterParameterGroup',
-            description='RedShift Cluster parameter group',
+            self, 'RedshiftClusterParameterGroup',
+            description='Redshift Cluster parameter group',
             parameter_group_family='redshift-1.0',
-            parameters=None
+            parameters=[
+                {
+                    "parameterName": "enable_user_activity_logging",
+                    "parameterValue": "true",
+                }
+            ]
         )
 
         # クラスターサブネットグループ
         cluster_subnet_group = redshift.CfnClusterSubnetGroup(
-            self, 'RedShiftClusterSubnetGroup',
-            description='RedShift Cluster subnet group',
+            self, 'RedshiftClusterSubnetGroup',
+            description='Redshift Cluster subnet group',
             subnet_ids=vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids
         )
 
         # クラスター
         cluster = redshift.CfnCluster(
-            self, 'RedShiftCluster',
+            self, 'RedshiftCluster',
             cluster_type=self.node.try_get_context('redshift')['cluster_type'],
             number_of_nodes=self.node.try_get_context('redshift')['number_of_nodes'],
             node_type=self.node.try_get_context('redshift')['node_type'],
@@ -69,7 +79,7 @@ class RedShiftStack(core.Stack):
                     self.node.try_get_context('account'),
                     self.node.try_get_context('bucket_suffix'),
                 ),
-                "s3KeyPrefix": "RedShiftLogs"
+                "s3KeyPrefix": "RedshiftLogs"
             }
         )
 

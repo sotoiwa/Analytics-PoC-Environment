@@ -36,10 +36,10 @@ class SapVpcStack(core.Stack):
             vpc=vpc
         )
 
-        # CloudTrailのVPCエンドポイントの作成
-        cloudtrail_endpoint = vpc.add_interface_endpoint(
-            id='CloudTrailEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CLOUDTRAIL,
+        # CloudWatchのVPCエンドポイントの作成
+        cloudwatch_endpoint = vpc.add_interface_endpoint(
+            id='CloudWatchEndpoint',
+            service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
             private_dns_enabled=True,
             security_groups=[endpoint_sg],
             subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
@@ -51,21 +51,6 @@ class SapVpcStack(core.Stack):
             private_dns_enabled=True,
             security_groups=[endpoint_sg],
             subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
-        )
-        # ConfigのVPCエンドポイントの作成
-        config_endpoint = vpc.add_interface_endpoint(
-            id='ConfigEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CONFIG,
-            private_dns_enabled=True,
-            security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)
-        )
-
-        # S3のVPCエンドポイントの作成
-        s3_endpoint = vpc.add_gateway_endpoint(
-            id='S3Endpoint',
-            service=ec2.GatewayVpcEndpointAwsService.S3,
-            subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE)]
         )
 
         self.output_props = props.copy()
