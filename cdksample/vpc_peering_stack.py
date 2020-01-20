@@ -19,7 +19,7 @@ class VpcPeeringStack(core.Stack):
             self, 'WorkSpacesToAnalyticsVPCPeering',
             vpc_id=workspaces_vpc.vpc_id,
             peer_vpc_id=analytics_vpc.vpc_id,
-            tags=[core.CfnTag(key='Name', value='{}/VPCPeering1'.format(self.stack_name))]
+            tags=[core.CfnTag(key='Name', value='{}/WorkSpacesToAnalyticsVPCPeering'.format(self.stack_name))]
         )
 
         # WorkSpaces用VPCからSAP用VCPへのピアリング
