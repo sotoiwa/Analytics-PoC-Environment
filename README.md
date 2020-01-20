@@ -37,6 +37,7 @@ CDKプロジェクトをローカルにクローンします。
 
 ```
 git clone https://github.com/sotoiwa/aws-cdksample.git
+cd aws-cdksample
 ```
 
 ### Pythonの準備
@@ -44,7 +45,6 @@ git clone https://github.com/sotoiwa/aws-cdksample.git
 Pythonのvirtualenvを作成して有効化します。
 
 ```
-cd aws-cdksample
 python3 -m venv .env
 source .env/bin/activate
 ```

@@ -71,8 +71,9 @@ Default output format [None]: <空ENTER>
 # jq
 sudo yum -y install jq
 # cfssl
-wget https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssl_1.4.1_linux_amd64
-wget https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssljson_1.4.1_linux_amd64
+curl -Lo cfssl https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssl_1.4.1_linux_amd64
+curl -Lo cfssljson https://github.com/cloudflare/cfssl/releases/download/v1.4.1/cfssljson_1.4.1_linux_amd64
 chmod +x cfssl cfssljson
 sudo mv cfssl cfssljson /usr/local/bin/
+cfssl version
 ```
