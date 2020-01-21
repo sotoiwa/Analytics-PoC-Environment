@@ -27,6 +27,9 @@ props = dict()
 test_stack = TestStack(app, '{}-TestStack'.format(prefix), env=env, props=props)
 props = test_stack.outputs
 
+bucket_stack = BucketStack(app, '{}-BucketStack'.format(prefix), env=env, props=props)
+props = bucket_stack.outputs
+
 workspaces_vpc_stack = WorkSpacesVpcStack(app, '{}-WorkSpacesVpcStack'.format(prefix), env=env, props=props)
 props = workspaces_vpc_stack.outputs
 
@@ -39,14 +42,11 @@ props = sap_vpc_stack.outputs
 vpc_peering_stack = VpcPeeringStack(app, '{}-VpcPeeringStack'.format(prefix), env=env, props=props)
 props = vpc_peering_stack.outputs
 
-iam_stack = IamStack(app, '{}-IamStack'.format(prefix), env=env, props=props)
-props = iam_stack.outputs
-
 audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(prefix), env=env, props=props)
 props = audit_log_stack.outputs
 
-bucket_stack = BucketStack(app, '{}-BucketStack'.format(prefix), env=env, props=props)
-props = bucket_stack.outputs
+iam_stack = IamStack(app, '{}-IamStack'.format(prefix), env=env, props=props)
+props = iam_stack.outputs
 
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
 props = proxy_stack.outputs

@@ -83,6 +83,12 @@ pip install -r requirements.txt
 
 ### デプロイ
 
+キーとバケットをデプロイします。
+
+```
+cdk deploy *BucketStack --require-approval never
+```
+
 VPCをデプロイします。
 
 ```
@@ -104,22 +110,16 @@ aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select(
   ],
 ```
 
-IAMユーザーをデプロイします。
-
-```
-cdk deploy *IamStack --require-approval never
-```
-
 監査ログ設定をデプロイします。
 
 ```
 cdk deploy *AuditLogStack --require-approval never
 ```
 
-データ保管用のバケットをデプロイします。
+IAMユーザーをデプロイします。
 
 ```
-cdk deploy *BucketStack --require-approval never
+cdk deploy *IamStack --require-approval never
 ```
 
 Proxyサーバーと踏み台サーバーをデプロイします。

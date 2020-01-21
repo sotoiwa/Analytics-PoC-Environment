@@ -1,6 +1,7 @@
 from aws_cdk import (
     core,
-    aws_ec2 as ec2
+    aws_ec2 as ec2,
+    aws_iam as iam
 )
 
 
@@ -8,6 +9,9 @@ class AnalyticsVpcStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
+
+        data_bucket = props['data_bucket']
+        log_bucket = props['log_bucket']
 
         # VPCの作成
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_ec2/Vpc.html
@@ -97,6 +101,22 @@ class AnalyticsVpcStack(core.Stack):
             id='S3Endpoint',
             service=ec2.GatewayVpcEndpointAwsService.S3,
             subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)]
+        )
+        # エンドポイントポリシーの追加
+        s3_endpoint.add_to_policy(
+            iam.PolicyStatement(
+                principals=[iam.AnyPrincipal()],
+                actions=[
+                    "s3:GetObject",
+                    "s3:PutObject"
+                ],
+                resources=[
+                    data_bucket.bucket_arn,
+                    data_bucket.arn_for_objects('*'),
+                    log_bucket.bucket_arn,
+                    log_bucket.arn_for_objects('*')
+                ]
+            )
         )
 
         self.output_props = props.copy()

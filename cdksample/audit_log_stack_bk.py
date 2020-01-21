@@ -1,46 +1,21 @@
 from aws_cdk import (
     core,
-    aws_iam as iam,
+    aws_ec2 as ec2,
     aws_s3 as s3,
-    aws_kms as kms
+    aws_iam as iam,
+    aws_cloudtrail as cloudtrail
 )
 
 
-class BucketStack(core.Stack):
+class AuditLogStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        ################
-        # キーの作成
-        ################
-
-        # キーを作成
-        customer_key = kms.Key(
-            self, 'CustomerKey',
-            enable_key_rotation=True,
-            alias='CustomerKey'
-        )
-
-        ################
-        # データ用バケットの作成
-        ################
-
-        # データ用のS3バケット
-        data_bucket = s3.Bucket(
-            self, 'DataBucket',
-            bucket_name='data-{}-{}'.format(
-                self.node.try_get_context('account'),
-                self.node.try_get_context('bucket_suffix'),
-            ),
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            encryption=s3.BucketEncryption.KMS,
-            encryption_key=customer_key
-        )
-
-        ################
-        # ログ用バケットの作成
-        ################
+        workspaces_vpc = props['workspaces_vpc']
+        analytics_vpc = props['analytics_vpc']
+        sap_vpc = props['sap_vpc']
+        log_bucket_read_users = props['log_bucket_read_users']
 
         # ログ格納用のS3バケット
         log_bucket = s3.Bucket(
@@ -50,6 +25,61 @@ class BucketStack(core.Stack):
                 self.node.try_get_context('bucket_suffix'),
             ),
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL
+        )
+
+        # VPC FlowLogsを有効化
+        for vpc in [workspaces_vpc, analytics_vpc, sap_vpc]:
+            flowlogs = ec2.CfnFlowLog(
+                self, 'FlowLogs{}'.format(vpc.to_string()),
+                resource_id=vpc.vpc_id,
+                resource_type='VPC',
+                traffic_type='ALL',
+                log_destination_type='s3',
+                log_destination=log_bucket.bucket_arn
+            )
+
+        # CloudTrailの有効化
+        trail = cloudtrail.Trail(
+            self, 'CloudTrail',
+            bucket=log_bucket,
+            enable_file_validation=True,
+            send_to_cloud_watch_logs=True
+        )
+        
+        # データ用のバケットについてオブジェクトレベルのロギングを有効化
+        trail.add_s3_event_selector(['arn:aws:s3:::data-{}-{}/'.format(
+            self.node.try_get_context('account'),
+            self.node.try_get_context('bucket_suffix')
+        )])
+
+        # VPCフローログ用のバケットポリシーを設定する
+        # IAMユーザー向けのポリシーを追加すると消えてしまった（バグ？）ので明示的に追加している
+        log_bucket.add_to_resource_policy(
+            permission=iam.PolicyStatement(
+                principals=[
+                    iam.ServicePrincipal('delivery.logs.amazonaws.com')
+                ],
+                actions=[
+                    "s3:PutObject"
+                ],
+                resources=[
+                    log_bucket.arn_for_objects("AWSLogs/{}/*".format(self.node.try_get_context('account')))
+                ],
+                conditions={"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}
+            )
+        )
+        log_bucket.add_to_resource_policy(
+            permission=iam.PolicyStatement(
+                principals=[
+                    iam.ServicePrincipal('delivery.logs.amazonaws.com')
+                ],
+                actions=[
+                    "s3:GetBucketAcl"
+                ],
+                resources=[
+                    log_bucket.bucket_arn
+                ]
+            )
         )
 
         # RedShift用のバケットポリシーの追加
@@ -104,39 +134,24 @@ class BucketStack(core.Stack):
             )
         )
 
-        # VPCフローログ用のバケットポリシーを設定する
-        # IAMユーザー向けのポリシーを追加すると消えてしまった（バグ？）ので明示的に追加している
+        # バケットポリシーを設定する
+        # IAMグループを指定できないのでIAMユーザーを指定する
         log_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
-                principals=[
-                    iam.ServicePrincipal('delivery.logs.amazonaws.com')
-                ],
+                principals=log_bucket_read_users,
                 actions=[
-                    "s3:PutObject"
+                    "s3:GetObject*",
+                    "s3:GetBucket*",
+                    "s3:List*"
                 ],
                 resources=[
-                    log_bucket.arn_for_objects("AWSLogs/{}/*".format(self.node.try_get_context('account')))
-                ],
-                conditions={"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}
-            )
-        )
-        log_bucket.add_to_resource_policy(
-            permission=iam.PolicyStatement(
-                principals=[
-                    iam.ServicePrincipal('delivery.logs.amazonaws.com')
-                ],
-                actions=[
-                    "s3:GetBucketAcl"
-                ],
-                resources=[
-                    log_bucket.bucket_arn
+                    log_bucket.bucket_arn,
+                    log_bucket.arn_for_objects('*')
                 ]
             )
         )
 
         self.output_props = props.copy()
-        self.output_props['customer_key'] = customer_key
-        self.output_props['data_bucket'] = data_bucket
         self.output_props['log_bucket'] = log_bucket
 
     @property

@@ -196,9 +196,9 @@ EOF""")
         # CloudWatchエージェント用のポリシーをアタッチ
         proxy_asg.role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('CloudWatchAgentServerPolicy'))
 
-        # Route53にレコードを追加するためのポリシー
-        route53_policy = iam.Policy(
-            self, 'Route53Policy',
+        # Route53にレコードを追加するためのカスタマー管理ポリシー
+        route53_policy = iam.ManagedPolicy(
+            self, 'ProxyRoute53Policy',
             statements=[
                 iam.PolicyStatement(
                     actions=["route53:ChangeResourceRecordSets"],
@@ -206,7 +206,7 @@ EOF""")
                 )
             ]
         )
-        proxy_asg.role.attach_inline_policy(route53_policy)
+        proxy_asg.role.add_managed_policy(route53_policy)
 
         self.output_props = props.copy()
         self.output_props['workspaces_proxy_sg'] = proxy_asg.connections.security_groups[0]
