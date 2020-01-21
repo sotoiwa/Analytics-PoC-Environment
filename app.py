@@ -14,6 +14,8 @@ from cdksample.proxy_stack import ProxyStack
 from cdksample.bastion_stack import BastionStack
 from cdksample.redshift_stack import RedshiftStack
 from cdksample.sagemaker_stack import SageMakerStack
+from cdksample.config_stack import ConfigStack
+from cdksample.events_stack import EventsStack
 
 
 app = core.App()
@@ -59,5 +61,11 @@ props = redshift_stack.outputs
 
 sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(prefix), env=env, props=props)
 props = sagemaker_stack.outputs
+
+config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
+props = config_stack.outputs
+
+events_stack = EventsStack(app, '{}-EventsStack'.format(prefix), env=env, props=props)
+props = events_stack.outputs
 
 app.synth()

@@ -13,6 +13,7 @@ class RedshiftStack(core.Stack):
 
         vpc = props['analytics_vpc']
         endpoint_sg = props['analytics_endpoint_sg']
+        customer_key = props['customer_key']
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/
@@ -29,6 +30,7 @@ class RedshiftStack(core.Stack):
             self, 'RedshiftSecurityGroup',
             vpc=vpc
         )
+        # VPCエンドポイントへのアクセスを許可
         redshift_sg.connections.allow_to(
             other=endpoint_sg,
             port_range=ec2.Port.all_traffic()
@@ -73,7 +75,8 @@ class RedshiftStack(core.Stack):
             allow_version_upgrade=True,
             automated_snapshot_retention_period=self.node.try_get_context('redshift')[
                 'automated_snapshot_retention_period'],
-            encrypted=False,
+            encrypted=True,
+            kms_key_id=customer_key.key_id,
             logging_properties={
                 "bucketName": "log-{}-{}".format(
                     self.node.try_get_context('account'),

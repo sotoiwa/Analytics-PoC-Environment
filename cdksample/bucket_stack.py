@@ -104,12 +104,13 @@ class BucketStack(core.Stack):
             )
         )
 
-        # VPCフローログ用のバケットポリシーを設定する
-        # IAMユーザー向けのポリシーを追加すると消えてしまった（バグ？）ので明示的に追加している
+        # VPCフローログ、CloudTrail、Config用のバケットポリシーを明示的に設定する
         log_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
                 principals=[
-                    iam.ServicePrincipal('delivery.logs.amazonaws.com')
+                    iam.ServicePrincipal('delivery.logs.amazonaws.com'),
+                    iam.ServicePrincipal('cloudtrail.amazonaws.com'),
+                    iam.ServicePrincipal('config.amazonaws.com')
                 ],
                 actions=[
                     "s3:PutObject"
@@ -117,13 +118,17 @@ class BucketStack(core.Stack):
                 resources=[
                     log_bucket.arn_for_objects("AWSLogs/{}/*".format(self.node.try_get_context('account')))
                 ],
-                conditions={"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}
+                conditions={
+                    "StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}
+                }
             )
         )
         log_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
                 principals=[
-                    iam.ServicePrincipal('delivery.logs.amazonaws.com')
+                    iam.ServicePrincipal('delivery.logs.amazonaws.com'),
+                    iam.ServicePrincipal('cloudtrail.amazonaws.com'),
+                    iam.ServicePrincipal('config.amazonaws.com')
                 ],
                 actions=[
                     "s3:GetBucketAcl"

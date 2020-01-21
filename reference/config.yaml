@@ -1,0 +1,114 @@
+Parameters:
+  ConfigSnapshotDeliveryValue:
+    Type: String
+    Default: Six_Hours
+    Description: Config Snapshot Delivery Properties.
+    MinLength: '1'
+    ConstraintDescription: This parameter is required.
+    AllowedValues:
+      - One_Hour
+      - Three_Hours
+      - Six_Hours
+      - Twelve_Hours
+      - TwentyFour_Hours
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  ConfigTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: ConfigTopic
+      TopicName: ConfigTopic
+  S3ConfigBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Join:
+          - ''
+          - - config-bucket-
+            - Ref: AWS::AccountId
+  IAMRoleConfig:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ConfigRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: config.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSConfigRole
+      Policies:
+        - PolicyName: AWSConfigRoleInlinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject*
+                Resource:
+                  Fn::Join:
+                    - ''
+                    - - arn:aws:s3:::config-bucket-
+                      - Ref: AWS::AccountId
+                      - /AWSLogs/
+                      - Ref: AWS::AccountId
+                      - /*
+                Condition:
+                  StringLike:
+                    s3:x-amz-acl: bucket-owner-full-control
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketAcl
+                Resource:
+                  Fn::Join:
+                    - ''
+                    - - arn:aws:s3:::config-bucket-
+                      - Ref: AWS::AccountId
+              - Effect: Allow
+                Action: sns:Publish
+                Resource:
+                  Fn::Join:
+                    - ''
+                    - - 'arn:aws:sns:ap-northeast-1:'
+                      - Ref: AWS::AccountId
+  DeliveryChannel:
+    Type: AWS::Config::DeliveryChannel
+    Properties:
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency:
+          Ref: ConfigSnapshotDeliveryValue
+      S3BucketName:
+        Ref: S3ConfigBucket
+      SnsTopicARN:
+        Ref: ConfigTopic
+    DependsOn:
+      - S3ConfigBucket
+      - ConfigTopic
+      - IAMRoleConfig
+  ConfigRecorder:
+    Type: AWS::Config::ConfigurationRecorder
+    Properties:
+      Name: AWSConfigRecorder
+      RecordingGroup:
+        IncludeGlobalResourceTypes: 'TRUE'
+        AllSupported: 'TRUE'
+      RoleARN:
+        Fn::GetAtt:
+          - IAMRoleConfig
+          - Arn
+    DependsOn:
+      - S3ConfigBucket
+      - ConfigTopic
+      - IAMRoleConfig
+  CloudTrailEnable:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: cloudtrail-enabled
+      Source:
+        Owner: AWS
+        SourceIdentifier: CLOUD_TRAIL_ENABLED
+      MaximumExecutionFrequency: TwentyFour_Hours
+    DependsOn:
+      - ConfigRecorder

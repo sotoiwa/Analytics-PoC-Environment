@@ -12,6 +12,8 @@ class SageMakerStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['analytics_vpc']
+        endpoint_sg = props['analytics_endpoint_sg']
+        customer_key = props['customer_key']
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/build-fast-flexible-secure-machine-learning-platform-using-amazon-sagemaker-and-amazon-redshift/
@@ -27,6 +29,11 @@ class SageMakerStack(core.Stack):
             self, 'NotebookSecurityGroup',
             vpc=vpc
         )
+        # VPCエンドポイントへのアクセスを許可
+        notebook_sg.connections.allow_to(
+            other=endpoint_sg,
+            port_range=ec2.Port.all_traffic()
+        )
 
         # Notebookインスタンス
         for i in range(self.node.try_get_context('sagemaker')['number_of_notebooks']):
@@ -38,7 +45,8 @@ class SageMakerStack(core.Stack):
                 subnet_id=vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids[i % 2],
                 security_group_ids=[notebook_sg.security_group_id],
                 role_arn=notebook_execution_role.role_arn,
-                direct_internet_access='Disabled'
+                direct_internet_access='Disabled',
+                kms_key_id=customer_key.key_id
             )
 
         self.output_props = props.copy()

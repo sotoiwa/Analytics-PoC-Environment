@@ -131,7 +131,7 @@ cdk deploy *ProxyStack *BastionStack --require-approval never
 RedShiftクラスターをデプロイします。
 
 ```
-cdk deploy *RedShiftStack --require-approval never
+cdk deploy *RedshiftStack --require-approval never
 ```
 
 SageMakerノートブックインスタンスをデプロイします。

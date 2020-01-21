@@ -47,6 +47,11 @@ class WorkSpacesVpcStack(core.Stack):
             self, 'WorkSpacesSecurityGroup',
             vpc=vpc
         )
+        # VPCエンドポイントへのアクセスを許可
+        workspaces_sg.connections.allow_to(
+            other=endpoint_sg,
+            port_range=ec2.Port.all_traffic()
+        )
 
         # CloudWatchのVPCエンドポイントの作成
         cloudwatch_endpoint = vpc.add_interface_endpoint(
