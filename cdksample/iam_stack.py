@@ -27,7 +27,7 @@ class IamStack(core.Stack):
             role_name='CostAdminRole',
             assumed_by=iam.AccountRootPrincipal(),
         )
-        admin_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('job-function/Billing'))
+        cost_admin_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('job-function/Billing'))
 
         # S3管理ロール
         s3_admin_role = iam.Role(
