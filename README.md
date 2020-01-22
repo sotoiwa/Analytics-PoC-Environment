@@ -122,12 +122,6 @@ cdk deploy *IamStack --require-approval never
 cdk deploy *BucketStack --require-approval never
 ```
 
-監査ログ設定をデプロイします。
-
-```
-cdk deploy *AuditLogStack --require-approval never
-```
-
 Proxyサーバーと踏み台サーバーをデプロイします。
 
 ```
@@ -146,16 +140,16 @@ SageMakerノートブックインスタンスをデプロイします。
 cdk deploy *SageMakerStack --require-approval never
 ```
 
-CloudWatch Events設定をデプロイします。
+監査ログ設定をデプロイします。
 
 ```
-cdk deploy *EventsStack --require-approval never
+cdk deploy *AuditLogStack --require-approval never
 ```
 
-Config設定をデプロイします。
+Events、Config、GuardDutyの設定をデプロイします。
 
 ```
-cdk deploy *ConfigStack --require-approval never
+cdk deploy *EventsStack *ConfigStack *GuardDutyStack--require-approval never
 ```
 
 ## WorkSpaces

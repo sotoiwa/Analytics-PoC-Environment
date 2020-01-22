@@ -11,12 +11,13 @@ class BucketStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        admin_group = props['admin_group']
-        environment_admin_group = props['environment_admin_group']
-        data_scientist_group = props['data_scientist_group']
-        customer_key_encrypt_decrypt_users = props['customer_key_encrypt_decrypt_users']
-        data_bucket_read_write_users = props['data_bucket_read_write_users']
-        log_bucket_read_users = props['data_bucket_read_write_users']
+        admin_role = props['admin_role']
+        cost_admin_role = props['cost_admin_role']
+        s3_admin_role = props['s3_admin_role']
+        system_admin_role = props['system_admin_role']
+        security_audit_role = props['security_audit_role']
+        kms_admin_role = props['kms_admin_role']
+        data_scientist_role = props['data_scientist_role']
 
         ################
         # キーの作成
@@ -28,6 +29,50 @@ class BucketStack(core.Stack):
             enable_key_rotation=True,
             alias='CustomerKey'
         )
+
+        # キーポリシーを設定する
+        customer_key.add_to_resource_policy(
+            statement=iam.PolicyStatement(
+                principals=[
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/S3AdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/SystemAdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/DataScientistRole'.format(
+                        self.node.try_get_context('account')))
+                ],
+                actions=[
+                    "kms:Decrypt",
+                    "kms:DescribeKey",
+                    "kms:Encrypt",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*"
+                ],
+                resources=['*']
+            )
+        )
+
+        # キーを使った暗号化・復号を許可するIAMポリシー
+        customer_key_encrypt_decrypt_policy = iam.ManagedPolicy(
+            self, 'CustomerKeyEncryptDecryptPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "kms:Decrypt",
+                        "kms:DescribeKey",
+                        "kms:Encrypt",
+                        "kms:ReEncrypt*",
+                        "kms:GenerateDataKey*"
+                    ],
+                    resources=[customer_key.key_arn]
+                )
+            ]
+        )
+
+        for role in [admin_role, s3_admin_role, system_admin_role, data_scientist_role]:
+            customer_key_encrypt_decrypt_policy.attach_to_role(role)
 
         ################
         # データ用バケットの作成
@@ -42,8 +87,34 @@ class BucketStack(core.Stack):
             ),
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.KMS,
-            encryption_key=customer_key,
-            versioned=True
+            encryption_key=customer_key
+        )
+        # いくつかのIAMロールからの参照を許可するバケットポリシー
+        data_bucket.add_to_resource_policy(
+            permission=iam.PolicyStatement(
+                principals=[
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/S3AdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/SystemAdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/DataScientistRole'.format(
+                        self.node.try_get_context('account')))
+                ],
+                actions=[
+                    "s3:GetObject*",
+                    "s3:GetBucket*",
+                    "s3:List*",
+                    "s3:DeleteObject*",
+                    "s3:PutObject*",
+                    "s3:Abort*"
+                ],
+                resources=[
+                    data_bucket.bucket_arn,
+                    data_bucket.arn_for_objects('*')
+                ]
+            )
         )
 
         ################
@@ -60,7 +131,7 @@ class BucketStack(core.Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
 
-        # RedShift用のバケットポリシーの追加
+        # Redshiftからの書き込みを許可するバケットポリシー
         # https://docs.aws.amazon.com/ja_jp/redshift/latest/mgmt/db-auditing.html#db-auditing-manage-log-files
         redshift_logging_account_map = {
             'us-east-1': '193672423079',
@@ -112,7 +183,7 @@ class BucketStack(core.Stack):
             )
         )
 
-        # VPCフローログ、CloudTrail、Config用のバケットポリシーを明示的に設定する
+        # VPCフローログ、CloudTrail、Config用からの書き込みを許可するバケットポリシーを明示的に設定する
         log_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
                 principals=[
@@ -147,77 +218,15 @@ class BucketStack(core.Stack):
             )
         )
 
-        ################
-        # キーの使用を許可するIAMポリシーとキーポリシー
-        ################
-
-        # キーを使って暗号化・復号できるカスタマー管理ポリシー
-        customer_key_encrypt_decrypt_policy = iam.ManagedPolicy(
-            self, 'CustomerKeyEncryptDecryptPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:DescribeKey",
-                        "kms:Encrypt",
-                        "kms:ReEncrypt*",
-                        "kms:GenerateDataKey*"
-                    ],
-                    resources=[customer_key.key_arn]
-                )
-            ]
-        )
-        # カスタマー管理ポリシーをグループにアタッチ
-        for group in [admin_group, environment_admin_group, data_scientist_group]:
-            customer_key_encrypt_decrypt_policy.attach_to_group(group)
-
-        # キーポリシーを設定する
-        # IAMグループを指定できないのでIAMユーザーを指定する
-        customer_key.add_to_resource_policy(
-            statement=iam.PolicyStatement(
-                principals=customer_key_encrypt_decrypt_users,
-                actions=[
-                    "kms:Decrypt",
-                    "kms:DescribeKey",
-                    "kms:Encrypt",
-                    "kms:ReEncrypt*",
-                    "kms:GenerateDataKey*"
-                ],
-                resources=['*']
-            )
-        )
-
-        ################
-        # データ用バケットのバケットポリシー
-        ################
-
-        # IAMグループを指定できないのでIAMユーザーを指定する
-        data_bucket.add_to_resource_policy(
-            permission=iam.PolicyStatement(
-                principals=data_bucket_read_write_users,
-                actions=[
-                    "s3:GetObject*",
-                    "s3:GetBucket*",
-                    "s3:List*",
-                    "s3:DeleteObject*",
-                    "s3:PutObject*",
-                    "s3:Abort*"
-                ],
-                resources=[
-                    data_bucket.bucket_arn,
-                    data_bucket.arn_for_objects('*')
-                ]
-            )
-        )
-
-        ################
-        # ログ用バケットのバケットポリシー
-        ################
-
-        # IAMグループを指定できないのでIAMユーザーを指定する
+        # いくつかのIAMロールからの参照を許可するバケットポリシー
         log_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
-                principals=log_bucket_read_users,
+                principals=[
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
+                        self.node.try_get_context('account'))),
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/SecurityAuditRole'.format(
+                        self.node.try_get_context('account')))
+                ],
                 actions=[
                     "s3:GetObject*",
                     "s3:GetBucket*",

@@ -123,7 +123,7 @@ class AnalyticsVpcStack(core.Stack):
                     'arn:aws:s3:::log-{}-{}/*'.format(
                         self.node.try_get_context('account'),
                         self.node.try_get_context('bucket_suffix')
-                    ),
+                    )
                 ]
             )
         )

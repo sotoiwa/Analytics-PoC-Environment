@@ -105,6 +105,7 @@ class EventsStack(core.Stack):
             cloudtrail_rule.add_target(targets.SnsTopic(alert_topic))
 
         self.output_props = props.copy()
+        self.output_props['alert_topic'] = alert_topic
 
     @property
     def outputs(self):

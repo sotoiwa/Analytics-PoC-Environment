@@ -7,7 +7,7 @@
   "region": "ap-northeast-1",
   "key_name": "",
   "hosted_zone": "corp.example.com",
-  "default_password": "",
+  "default_user_password": "",
   "admin_user_names": [
     "admin-user"
   ],
@@ -28,7 +28,7 @@
     "number_of_nodes": 6,
     "node_type": "dc2.large",
     "cluster_identifier": "redshift-cluster",
-    "db_name": "dev",
+    "db_name": "poc",
     "port": 5439,
     "master_username": "awsuser",
     "master_user_password": "",

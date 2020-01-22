@@ -2,6 +2,8 @@ from aws_cdk import (
     core,
     aws_config as config,
     aws_ec2 as ec2,
+    aws_events as events,
+    aws_events_targets as targets,
     aws_iam as iam
 )
 
@@ -11,14 +13,15 @@ class ConfigStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        alert_topic = props['alert_topic']
         workspaces_vpc = props['workspaces_vpc']
-        analytics_vpc = props['analytics_vpc']
         sap_vpc = props['sap_vpc']
+        log_bucket = props['log_bucket']
+
         default_vpc = ec2.Vpc.from_lookup(
             self, 'DefaultVpc',
             is_default=True
         )
-        log_bucket = props['log_bucket']
 
         ################
         # Configの有効化の設定
@@ -34,7 +37,6 @@ class ConfigStack(core.Stack):
 
         recorder = config.CfnConfigurationRecorder(
             self, 'ConfigurationRecoder',
-            # name='default',
             role_arn=config_role.role_arn,
             recording_group={
                 "allSupported": True,
@@ -44,7 +46,6 @@ class ConfigStack(core.Stack):
 
         channel = config.CfnDeliveryChannel(
             self, 'DeliveryChannel',
-            # name='default',
             s3_bucket_name=log_bucket.bucket_name,
             config_snapshot_delivery_properties=None
         )
@@ -61,6 +62,10 @@ class ConfigStack(core.Stack):
             maximum_execution_frequency=config.MaximumExecutionFrequency.ONE_HOUR
         )
         cloudtrail_enabled_rule.node.add_dependency(recorder)
+        cloudtrail_enabled_rule.on_compliance_change(
+            'CloudTrailEabledRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         ec2_instance_no_public_ip_rule = config.ManagedRule(
             self, 'Ec2InstanceNoPublicIpRule',
@@ -70,6 +75,10 @@ class ConfigStack(core.Stack):
         )
         ec2_instance_no_public_ip_rule.scope_to_resource('AWS::EC2::Instance')
         ec2_instance_no_public_ip_rule.node.add_dependency(recorder)
+        ec2_instance_no_public_ip_rule.on_compliance_change(
+            'Ec2InstanceNoPublicIpRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         iam_password_policy_rule = config.ManagedRule(
             self, 'IamPasswordPolicyRule',
@@ -88,6 +97,10 @@ class ConfigStack(core.Stack):
             }
         )
         iam_password_policy_rule.node.add_dependency(recorder)
+        iam_password_policy_rule.on_compliance_change(
+            'IamPasswordPolicyRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         iam_root_access_key_check_rule = config.ManagedRule(
             self, 'IamRootAccessKeyCheckRule',
@@ -97,18 +110,26 @@ class ConfigStack(core.Stack):
             maximum_execution_frequency=config.MaximumExecutionFrequency.ONE_HOUR,
         )
         iam_root_access_key_check_rule.node.add_dependency(recorder)
+        iam_root_access_key_check_rule.on_compliance_change(
+            'IamRootAccessKeyCheckRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         iam_user_mfa_enabled_rule = config.ManagedRule(
-            self, 'IamUserMfaEnabled',
+            self, 'IamUserMfaEnabledRule',
             identifier='IAM_USER_MFA_ENABLED',
             config_rule_name='iam-user-mfa-enabled',
             description='AWS Identity and Access Management ユーザーの Multi-Factor Authentication (MFA) が有効かどうかを確認します。',
             maximum_execution_frequency=config.MaximumExecutionFrequency.ONE_HOUR
         )
         iam_user_mfa_enabled_rule.node.add_dependency(recorder)
+        iam_user_mfa_enabled_rule.on_compliance_change(
+            'IamUserMfaEnabledRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         internet_gateway_authorized_vpc_only_rule = config.ManagedRule(
-            self, 'InternetGatewayAuthorizedVpcOnly',
+            self, 'InternetGatewayAuthorizedVpcOnlyRule',
             identifier='INTERNET_GATEWAY_AUTHORIZED_VPC_ONLY',
             config_rule_name='internet-gateway-authorized-vpc-only',
             description='インターネットゲートウェイ (IGW) が承認された Amazon Virtual Private Cloud (VPC) にのみ接続されていることを確認します。IGW が承認された VPC に接続されていない場合、ルールは NON_COMPLIANT です。',
@@ -118,18 +139,26 @@ class ConfigStack(core.Stack):
         )
         internet_gateway_authorized_vpc_only_rule.scope_to_resource('AWS::EC2::InternetGateway')
         internet_gateway_authorized_vpc_only_rule.node.add_dependency(recorder)
+        internet_gateway_authorized_vpc_only_rule.on_compliance_change(
+            'InternetGatewayAuthorizedVpcOnlyRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         root_account_mfa_enabled_rule = config.ManagedRule(
-            self, 'RootAccountMfaEnabled',
+            self, 'RootAccountMfaEnabledRule',
             identifier='ROOT_ACCOUNT_MFA_ENABLED',
             config_rule_name='root-account-mfa-enabled',
             description='AWS アカウントの root ユーザーが、コンソールのサインインに Multi-Factor Authentication を必要とするかどうかを確認します。',
             maximum_execution_frequency=config.MaximumExecutionFrequency.ONE_HOUR
         )
         root_account_mfa_enabled_rule.node.add_dependency(recorder)
+        root_account_mfa_enabled_rule.on_compliance_change(
+            'RootAccountMfaEnabledRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         s3_bucket_public_read_prohibited_rule = config.ManagedRule(
-            self, 'S3BucketPublicReadProhibited',
+            self, 'S3BucketPublicReadProhibitedRule',
             identifier='S3_BUCKET_PUBLIC_READ_PROHIBITED',
             config_rule_name='s3-bucket-public-read-prohibited',
             description='S3 バケットが読み取りパブリックアクセスを許可していないことを確認します。S3 バケットポリシーまたはバケット ACL で読み取りパブリックアクセスを許可している場合、そのバケットは準拠していません。',
@@ -137,6 +166,10 @@ class ConfigStack(core.Stack):
         )
         s3_bucket_public_read_prohibited_rule.scope_to_resource('AWS::S3::Bucket')
         s3_bucket_public_read_prohibited_rule.node.add_dependency(recorder)
+        s3_bucket_public_read_prohibited_rule.on_compliance_change(
+            'S3BucketPublicReadProhibitedRuleEvent',
+            target=targets.SnsTopic(alert_topic)
+        )
 
         self.output_props = props.copy()
 

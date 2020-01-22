@@ -7,16 +7,17 @@ from cdksample.workspaces_vpc_stack import WorkSpacesVpcStack
 from cdksample.analytics_vpc_stack import AnalyticsVpcStack
 from cdksample.sap_vpc_stack import SapVpcStack
 from cdksample.vpc_peering_stack import VpcPeeringStack
-from cdksample.audit_log_stack import AuditLogStack
 from cdksample.iam_stack import IamStack
 from cdksample.bucket_stack import BucketStack
 from cdksample.proxy_stack import ProxyStack
 from cdksample.bastion_stack import BastionStack
 from cdksample.redshift_stack import RedshiftStack
 from cdksample.sagemaker_stack import SageMakerStack
-from cdksample.config_stack import ConfigStack
+from cdksample.audit_log_stack import AuditLogStack
 from cdksample.events_stack import EventsStack
 from cdksample.global_events_stack import GlobalEventsStack
+from cdksample.config_stack import ConfigStack
+from cdksample.guardduty_stack import GuardDutyStack
 
 
 app = core.App()
@@ -52,9 +53,6 @@ props = iam_stack.outputs
 bucket_stack = BucketStack(app, '{}-BucketStack'.format(prefix), env=env, props=props)
 props = bucket_stack.outputs
 
-audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(prefix), env=env, props=props)
-props = audit_log_stack.outputs
-
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
 props = proxy_stack.outputs
 
@@ -67,6 +65,9 @@ props = redshift_stack.outputs
 sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(prefix), env=env, props=props)
 props = sagemaker_stack.outputs
 
+audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(prefix), env=env, props=props)
+props = audit_log_stack.outputs
+
 events_stack = EventsStack(app, '{}-EventsStack'.format(prefix), env=env, props=props)
 props = events_stack.outputs
 
@@ -75,5 +76,8 @@ props = global_events_stack.outputs
 
 config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
 props = config_stack.outputs
+
+guardduty_stack = GuardDutyStack(app, '{}-GuardDutyStack'.format(prefix), env=env, props=props)
+props = guardduty_stack.outputs
 
 app.synth()

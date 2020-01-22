@@ -55,9 +55,7 @@ class GlobalEventsStack(core.Stack):
         root_login_rule.add_target(targets.SnsTopic(alert_topic))
 
         # コンソールログインを監視するユーザーのリスト
-        login_usernames = [
-            "sotosugi",
-        ]
+        login_usernames = self.node.try_get_context('admin_user_names')
 
         # 監視ルールを定義
         for username in login_usernames:
@@ -81,7 +79,9 @@ class GlobalEventsStack(core.Stack):
 
         # IAMの監視対象イベント
         iam_event_names = [
-            "DeleteRole",
+            "AttachGroupPolicy",
+            "AttachRolePolicy",
+            "AttachUserPolicy",
             "DeleteGroupPolicy",
             "DeleteRolePolicy",
             "DeleteUserPolicy",
