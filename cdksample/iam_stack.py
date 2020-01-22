@@ -1,7 +1,6 @@
 from aws_cdk import (
     core,
-    aws_iam as iam,
-    aws_secretsmanager as secretsmanager
+    aws_iam as iam
 )
 
 
@@ -44,7 +43,7 @@ class IamStack(core.Stack):
         # IAMユーザーの作成
         ################
 
-        # 作成したユーザーのパスワードはSecretManagerに格納する
+        default_password = self.node.try_get_context('default_password')
 
         # 後でまとめてリソースポリシーを設定するためリスト化しておく
 
@@ -58,11 +57,10 @@ class IamStack(core.Stack):
         # 全体管理者ユーザーの作成
         admin_user_names = self.node.try_get_context('admin_user_names')
         for user_name in admin_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=secret.secret_value,
+                password=core.SecretValue.plain_text(default_password),
                 password_reset_required=True
             )
             user.add_to_group(admin_group)
@@ -74,11 +72,10 @@ class IamStack(core.Stack):
         # 環境管理者ユーザーの作成
         environment_admin_user_names = self.node.try_get_context('environment_admin_user_names')
         for user_name in environment_admin_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=secret.secret_value,
+                password=core.SecretValue.plain_text(default_password),
                 password_reset_required=True
             )
             # ユーザーをグループに追加
@@ -89,11 +86,10 @@ class IamStack(core.Stack):
         # セキュリティー監査ユーザーの作成
         security_audit_user_names = self.node.try_get_context('security_audit_user_names')
         for user_name in security_audit_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=secret.secret_value,
+                password=core.SecretValue.plain_text(default_password),
                 password_reset_required=True
             )
             # ユーザーをグループに追加
@@ -104,11 +100,10 @@ class IamStack(core.Stack):
         # 分析者ユーザーの作成
         data_scientist_user_names = self.node.try_get_context('data_scientist_user_names')
         for user_name in data_scientist_user_names:
-            secret = secretsmanager.Secret(self, '{}-Secrets'.format(user_name))
             user = iam.User(
                 self, user_name,
                 user_name=user_name,
-                password=secret.secret_value,
+                password=core.SecretValue.plain_text(default_password),
                 password_reset_required=True
             )
             # ユーザーをグループに追加

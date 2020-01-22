@@ -1,8 +1,8 @@
 from aws_cdk import (
     core,
     aws_iam as iam,
-    aws_s3 as s3,
-    aws_kms as kms
+    aws_kms as kms,
+    aws_s3 as s3
 )
 
 

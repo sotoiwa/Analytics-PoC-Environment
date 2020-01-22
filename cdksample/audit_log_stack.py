@@ -1,8 +1,6 @@
 from aws_cdk import (
     core,
     aws_ec2 as ec2,
-    aws_s3 as s3,
-    aws_iam as iam,
     aws_cloudtrail as cloudtrail
 )
 
@@ -36,7 +34,7 @@ class AuditLogStack(core.Stack):
             enable_file_validation=True,
             send_to_cloud_watch_logs=True
         )
-        
+
         # データ用のバケットについてオブジェクトレベルのロギングを有効化
         trail.add_s3_event_selector([data_bucket.bucket_arn + '/'])
 

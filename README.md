@@ -57,7 +57,7 @@ pip install -r requirements.txt
 
 ### 環境に合わせたカスタマイズ
 
-`cdk.context.json.sample`を`cdk.context.json`としてコピーします。
+`cdk.context.sample.json`を`cdk.context.json`としてコピーします。
 以下パラメータを自分の環境に合わせてカスタマイズします。
 
 |パラメータ|デフォルト値|備考|
@@ -146,7 +146,7 @@ Proxyサーバーと踏み台サーバーをデプロイします。
 cdk deploy *ProxyStack *BastionStack --require-approval never
 ```
 
-RedShiftクラスターをデプロイします。
+Redshiftクラスターをデプロイします。
 
 ```
 cdk deploy *RedshiftStack --require-approval never

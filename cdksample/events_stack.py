@@ -2,9 +2,9 @@ from aws_cdk import (
     core,
     aws_events as events,
     aws_events_targets as targets,
+    aws_iam as iam,
     aws_sns as sns,
     aws_sns_subscriptions as subscriptions,
-    aws_iam as iam
 )
 
 
