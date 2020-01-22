@@ -87,7 +87,8 @@ class BucketStack(core.Stack):
             ),
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.KMS,
-            encryption_key=customer_key
+            encryption_key=customer_key,
+            versioned=True
         )
         # いくつかのIAMロールからの参照を許可するバケットポリシー
         data_bucket.add_to_resource_policy(
