@@ -11,6 +11,13 @@ class BucketStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        admin_group = props['admin_group']
+        environment_admin_group = props['environment_admin_group']
+        data_scientist_group = props['data_scientist_group']
+        customer_key_encrypt_decrypt_users = props['customer_key_encrypt_decrypt_users']
+        data_bucket_read_write_users = props['data_bucket_read_write_users']
+        log_bucket_read_users = props['data_bucket_read_write_users']
+
         ################
         # キーの作成
         ################
@@ -135,6 +142,89 @@ class BucketStack(core.Stack):
                 ],
                 resources=[
                     log_bucket.bucket_arn
+                ]
+            )
+        )
+
+        ################
+        # キーの使用を許可するIAMポリシーとキーポリシー
+        ################
+
+        # キーを使って暗号化・復号できるカスタマー管理ポリシー
+        customer_key_encrypt_decrypt_policy = iam.ManagedPolicy(
+            self, 'CustomerKeyEncryptDecryptPolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "kms:Decrypt",
+                        "kms:DescribeKey",
+                        "kms:Encrypt",
+                        "kms:ReEncrypt*",
+                        "kms:GenerateDataKey*"
+                    ],
+                    resources=[customer_key.key_arn]
+                )
+            ]
+        )
+        # カスタマー管理ポリシーをグループにアタッチ
+        for group in [admin_group, environment_admin_group, data_scientist_group]:
+            customer_key_encrypt_decrypt_policy.attach_to_group(group)
+
+        # キーポリシーを設定する
+        # IAMグループを指定できないのでIAMユーザーを指定する
+        customer_key.add_to_resource_policy(
+            statement=iam.PolicyStatement(
+                principals=customer_key_encrypt_decrypt_users,
+                actions=[
+                    "kms:Decrypt",
+                    "kms:DescribeKey",
+                    "kms:Encrypt",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*"
+                ],
+                resources=['*']
+            )
+        )
+
+        ################
+        # データ用バケットのバケットポリシー
+        ################
+
+        # IAMグループを指定できないのでIAMユーザーを指定する
+        data_bucket.add_to_resource_policy(
+            permission=iam.PolicyStatement(
+                principals=data_bucket_read_write_users,
+                actions=[
+                    "s3:GetObject*",
+                    "s3:GetBucket*",
+                    "s3:List*",
+                    "s3:DeleteObject*",
+                    "s3:PutObject*",
+                    "s3:Abort*"
+                ],
+                resources=[
+                    data_bucket.bucket_arn,
+                    data_bucket.arn_for_objects('*')
+                ]
+            )
+        )
+
+        ################
+        # ログ用バケットのバケットポリシー
+        ################
+
+        # IAMグループを指定できないのでIAMユーザーを指定する
+        log_bucket.add_to_resource_policy(
+            permission=iam.PolicyStatement(
+                principals=log_bucket_read_users,
+                actions=[
+                    "s3:GetObject*",
+                    "s3:GetBucket*",
+                    "s3:List*"
+                ],
+                resources=[
+                    log_bucket.bucket_arn,
+                    log_bucket.arn_for_objects('*')
                 ]
             )
         )

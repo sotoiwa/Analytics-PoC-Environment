@@ -3,6 +3,7 @@ from aws_cdk import (
     aws_events as events,
     aws_events_targets as targets,
     aws_sns as sns,
+    aws_sns_subscriptions as subscriptions,
     aws_iam as iam
 )
 
@@ -12,10 +13,11 @@ class EventsStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        # メール通知用のトピック
         alert_topic = sns.Topic(
-            self, 'AlertTopic',
-            topic_name='AlertTopic'
+            self, 'AlertTopic'
         )
+        # トピックポリシーを設定
         alert_topic.add_to_resource_policy(
             statement=iam.PolicyStatement(
                 principals=[
@@ -29,7 +31,10 @@ class EventsStack(core.Stack):
                 ]
             )
         )
+        # サブスクリプションを設定
+        alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
 
+        # EC2の監視対象イベントのリスト
         ec2_event_names = [
             "AttachInternetGateway",
             "AssociateRouteTable",
@@ -52,6 +57,7 @@ class EventsStack(core.Stack):
             "DeleteSecurityGroup"
         ]
 
+        # 監視ルールを定義
         for event_name in ec2_event_names:
             ec2_rule = events.Rule(
                 self, 'Ec2{}Rule'.format(event_name),
@@ -70,12 +76,14 @@ class EventsStack(core.Stack):
             )
             ec2_rule.add_target(targets.SnsTopic(alert_topic))
 
+        # CloudTrailの監視対象イベントのリスト
         cloudtrail_event_names = [
             "StopLogging",
             "DeleteTrail",
             "UpdateTrail"
         ]
 
+        # 監視ルールを定義
         for event_name in cloudtrail_event_names:
             cloudtrail_rule = events.Rule(
                 self, 'CloudTrail{}Rule'.format(event_name),

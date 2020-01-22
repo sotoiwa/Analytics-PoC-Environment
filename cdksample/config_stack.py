@@ -71,15 +71,6 @@ class ConfigStack(core.Stack):
         ec2_instance_no_public_ip_rule.scope_to_resource('AWS::EC2::Instance')
         ec2_instance_no_public_ip_rule.node.add_dependency(recorder)
 
-        encrypted_volumes_rule = config.ManagedRule(
-            self, 'EncryptedVolumesRule',
-            identifier='ENCRYPTED_VOLUMES',
-            config_rule_name='encrypted-volumes',
-            description='アタッチ状態の EBS ボリュームが暗号化されているかどうかを確認します。オプションで、ボリュームの暗号化に使用する KMS キーの ID を指定することができます。'
-        )
-        encrypted_volumes_rule.scope_to_resource('AWS::EC2::Volume')
-        encrypted_volumes_rule.node.add_dependency(recorder)
-
         iam_password_policy_rule = config.ManagedRule(
             self, 'IamPasswordPolicyRule',
             identifier='IAM_PASSWORD_POLICY',

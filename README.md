@@ -83,10 +83,10 @@ pip install -r requirements.txt
 
 ### デプロイ
 
-キーとバケットをデプロイします。
+CDKが使用するバケットを作成します。
 
 ```
-cdk deploy *BucketStack --require-approval never
+cdk bootstrap
 ```
 
 VPCをデプロイします。
@@ -110,16 +110,34 @@ aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select(
   ],
 ```
 
+IAMユーザーをデプロイします。
+
+```
+cdk deploy *IamStack --require-approval never
+```
+
+キーとバケットをデプロイします。
+
+```
+cdk deploy *BucketStack --require-approval never
+```
+
 監査ログ設定をデプロイします。
 
 ```
 cdk deploy *AuditLogStack --require-approval never
 ```
 
-IAMユーザーをデプロイします。
+CloudWatch Events設定をデプロイします。
 
 ```
-cdk deploy *IamStack --require-approval never
+cdk deploy *EventsStack --require-approval never
+```
+
+Config設定をデプロイします。
+
+```
+cdk deploy *EventsStack --require-approval never
 ```
 
 Proxyサーバーと踏み台サーバーをデプロイします。

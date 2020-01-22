@@ -14,7 +14,7 @@ class IamStack(core.Stack):
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_iam.html
 
         ################
-        # グループの作成
+        # IAMグループの作成
         ################
 
         # 全体管理者グループ
@@ -41,13 +41,15 @@ class IamStack(core.Stack):
         )
 
         ################
-        # ユーザーの作成
+        # IAMユーザーの作成
         ################
 
         # 作成したユーザーのパスワードはSecretManagerに格納する
 
-        # data_keyの使用を許可するユーザーのリスト
-        data_key_encrypt_decrypt_users = []
+        # 後でまとめてリソースポリシーを設定するためリスト化しておく
+
+        # customer_keyの使用を許可するユーザーのリスト
+        customer_key_encrypt_decrypt_users = []
         # data_bucketの更新を許可するユーザーのリスト
         data_bucket_read_write_users = []
         # log_bucketの参照を許可するユーザーのリスト
@@ -64,9 +66,9 @@ class IamStack(core.Stack):
                 password_reset_required=True
             )
             user.add_to_group(admin_group)
-            # data_keyの使用を許可
-            data_key_encrypt_decrypt_users.append(user)
-            # data_bucketの更新を許可
+            # customer_keyの使用を許可するリストに追加
+            customer_key_encrypt_decrypt_users.append(user)
+            # data_bucketの更新を許可するリストに追加
             data_bucket_read_write_users.append(user)
 
         # 環境管理者ユーザーの作成
@@ -79,9 +81,10 @@ class IamStack(core.Stack):
                 password=secret.secret_value,
                 password_reset_required=True
             )
+            # ユーザーをグループに追加
             user.add_to_group(environment_admin_group)
-            # data_keyの使用を許可
-            data_key_encrypt_decrypt_users.append(user)
+            # customer_keyの使用を許可するリストに追加
+            customer_key_encrypt_decrypt_users.append(user)
 
         # セキュリティー監査ユーザーの作成
         security_audit_user_names = self.node.try_get_context('security_audit_user_names')
@@ -93,8 +96,9 @@ class IamStack(core.Stack):
                 password=secret.secret_value,
                 password_reset_required=True
             )
+            # ユーザーをグループに追加
             user.add_to_group(security_audit_group)
-            # log_bucketの参照を許可
+            # log_bucketの参照を許可するリストに追加
             log_bucket_read_users.append(user)
 
         # 分析者ユーザーの作成
@@ -107,27 +111,29 @@ class IamStack(core.Stack):
                 password=secret.secret_value,
                 password_reset_required=True
             )
+            # ユーザーをグループに追加
             user.add_to_group(data_scientist_group)
-            # data_keyの使用を許可する
-            data_key_encrypt_decrypt_users.append(user)
-            # data_bucketの更新を許可
+            # customer_keyの使用を許可するリストに追加
+            customer_key_encrypt_decrypt_users.append(user)
+            # data_bucketの更新を許可するリストに追加
             data_bucket_read_write_users.append(user)
 
         ################
-        # 管理者グループ個別の権限設定
+        # 管理者グループ個別のIAMポリシー設定
         ################
 
         # 管理者グループ
         admin_group.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AdministratorAccess'))
 
         ################
-        # 環境管理者グループ個別の権限設定
+        # 環境管理者グループ個別のIAMポリシー設定
         ################
 
         # コスト管理用のAWS管理ポリシー
         environment_admin_group.add_managed_policy(
             iam.ManagedPolicy.from_aws_managed_policy_name('job-function/Billing'))
         # S3管理用のカスタマー管理ポリシー
+        # TODO アクションを絞る
         s3_admin_policy = iam.ManagedPolicy(
             self, 'S3AdminPolicy',
             statements=[
@@ -244,7 +250,7 @@ class IamStack(core.Stack):
         environment_admin_group.add_managed_policy(system_admin_policy)
 
         ################
-        # セキュリティ監査者グループ個別の権限設定
+        # セキュリティ監査者グループ個別のIAMポリシー設定
         ################
 
         # セキュリティ監査者用のカスタマー管理ポリシー
@@ -278,7 +284,7 @@ class IamStack(core.Stack):
         security_audit_group.add_managed_policy(kms_admin_policy)
 
         ################
-        # 分析者グループ個別の権限設定
+        # 分析者グループ個別のIAMポリシー設定
         ################
 
         # 分析者用のカスタマー管理ポリシー
@@ -299,8 +305,10 @@ class IamStack(core.Stack):
         data_scientist_group.add_managed_policy(data_scientist_policy)
 
         ################
-        # 自身のパスワードとMFAの設定を許可
+        # 自身のパスワードとMFAの設定を許可するIAMポリシー
         ################
+
+        # https://dev.classmethod.jp/cloud/aws/iam-difference-between-changepassword-and-updateloginprofile/
 
         # パスワードとMFA設定用ポリシー
         password_mfa_policy = iam.ManagedPolicy(
@@ -309,16 +317,16 @@ class IamStack(core.Stack):
                 iam.PolicyStatement(
                     actions=[
                         "iam:ChangePassword",
-                        "iam:CreateAccessKey",
+                        # "iam:CreateAccessKey",
                         "iam:CreateVirtualMFADevice",
                         "iam:DeactivateMFADevice",
-                        "iam:DeleteAccessKey",
+                        # "iam:DeleteAccessKey",
                         "iam:DeleteVirtualMFADevice",
                         "iam:EnableMFADevice",
                         "iam:GetAccountPasswordPolicy",
-                        "iam:UpdateAccessKey",
-                        "iam:UpdateSigningCertificate",
-                        "iam:UploadSigningCertificate",
+                        # "iam:UpdateAccessKey",
+                        # "iam:UpdateSigningCertificate",
+                        # "iam:UploadSigningCertificate",
                         "iam:UpdateLoginProfile",
                         "iam:ResyncMFADevice"
                     ],
@@ -342,7 +350,7 @@ class IamStack(core.Stack):
             group.add_managed_policy(password_mfa_policy)
 
         ################
-        # IPアドレス制限
+        # IPアドレス制限を行うIAMポリシー
         ################
 
         # IPアドレス制限を行うカスタマー管理ポリシー
@@ -371,7 +379,7 @@ class IamStack(core.Stack):
         self.output_props['security_audit_group'] = security_audit_group
         self.output_props['data_scientist_group'] = data_scientist_group
         self.output_props['log_bucket_read_users'] = log_bucket_read_users
-        self.output_props['data_key_encrypt_decrypt_users'] = data_key_encrypt_decrypt_users
+        self.output_props['customer_key_encrypt_decrypt_users'] = customer_key_encrypt_decrypt_users
         self.output_props['data_bucket_read_write_users'] = data_bucket_read_write_users
 
     @property

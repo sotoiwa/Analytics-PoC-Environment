@@ -16,6 +16,7 @@ from cdksample.redshift_stack import RedshiftStack
 from cdksample.sagemaker_stack import SageMakerStack
 from cdksample.config_stack import ConfigStack
 from cdksample.events_stack import EventsStack
+from cdksample.global_events_stack import GlobalEventsStack
 
 
 app = core.App()
@@ -24,13 +25,14 @@ env = core.Environment(
     account=app.node.try_get_context('account'),
     region=app.node.try_get_context('region')
 )
+global_env = core.Environment(
+    account=app.node.try_get_context('account'),
+    region='us-east-1'
+)
 props = dict()
 
 test_stack = TestStack(app, '{}-TestStack'.format(prefix), env=env, props=props)
 props = test_stack.outputs
-
-bucket_stack = BucketStack(app, '{}-BucketStack'.format(prefix), env=env, props=props)
-props = bucket_stack.outputs
 
 workspaces_vpc_stack = WorkSpacesVpcStack(app, '{}-WorkSpacesVpcStack'.format(prefix), env=env, props=props)
 props = workspaces_vpc_stack.outputs
@@ -44,11 +46,23 @@ props = sap_vpc_stack.outputs
 vpc_peering_stack = VpcPeeringStack(app, '{}-VpcPeeringStack'.format(prefix), env=env, props=props)
 props = vpc_peering_stack.outputs
 
+iam_stack = IamStack(app, '{}-IamStack'.format(prefix), env=env, props=props)
+props = iam_stack.outputs
+
+bucket_stack = BucketStack(app, '{}-BucketStack'.format(prefix), env=env, props=props)
+props = bucket_stack.outputs
+
 audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(prefix), env=env, props=props)
 props = audit_log_stack.outputs
 
-iam_stack = IamStack(app, '{}-IamStack'.format(prefix), env=env, props=props)
-props = iam_stack.outputs
+events_stack = EventsStack(app, '{}-EventsStack'.format(prefix), env=env, props=props)
+props = events_stack.outputs
+
+global_events_stack = GlobalEventsStack(app, '{}-GlobalEventsStack'.format(prefix), env=global_env, props=props)
+props = global_events_stack.outputs
+
+config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
+props = config_stack.outputs
 
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
 props = proxy_stack.outputs
@@ -61,11 +75,5 @@ props = redshift_stack.outputs
 
 sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(prefix), env=env, props=props)
 props = sagemaker_stack.outputs
-
-config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
-props = config_stack.outputs
-
-events_stack = EventsStack(app, '{}-EventsStack'.format(prefix), env=env, props=props)
-props = events_stack.outputs
 
 app.synth()
