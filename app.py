@@ -55,15 +55,6 @@ props = bucket_stack.outputs
 audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(prefix), env=env, props=props)
 props = audit_log_stack.outputs
 
-events_stack = EventsStack(app, '{}-EventsStack'.format(prefix), env=env, props=props)
-props = events_stack.outputs
-
-global_events_stack = GlobalEventsStack(app, '{}-GlobalEventsStack'.format(prefix), env=global_env, props=props)
-props = global_events_stack.outputs
-
-config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
-props = config_stack.outputs
-
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
 props = proxy_stack.outputs
 
@@ -75,5 +66,14 @@ props = redshift_stack.outputs
 
 sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(prefix), env=env, props=props)
 props = sagemaker_stack.outputs
+
+events_stack = EventsStack(app, '{}-EventsStack'.format(prefix), env=env, props=props)
+props = events_stack.outputs
+
+global_events_stack = GlobalEventsStack(app, '{}-GlobalEventsStack'.format(prefix), env=global_env, props=props)
+props = global_events_stack.outputs
+
+config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
+props = config_stack.outputs
 
 app.synth()

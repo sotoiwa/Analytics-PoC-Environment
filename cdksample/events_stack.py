@@ -32,7 +32,9 @@ class EventsStack(core.Stack):
             )
         )
         # サブスクリプションを設定
-        alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
+        emails = self.node.try_get_context('emails_to_alert')
+        for email in emails:
+            alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
 
         # EC2の監視対象イベントのリスト
         ec2_event_names = [

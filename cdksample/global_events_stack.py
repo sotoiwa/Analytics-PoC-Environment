@@ -34,7 +34,9 @@ class GlobalEventsStack(core.Stack):
             )
         )
         # サブスクリプションを設定
-        alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
+        emails = self.node.try_get_context('emails_to_alert')
+        for email in emails:
+            alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
 
         # rootユーザーのログインの監視
         root_login_rule = events.Rule(

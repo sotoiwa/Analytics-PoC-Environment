@@ -128,18 +128,6 @@ cdk deploy *BucketStack --require-approval never
 cdk deploy *AuditLogStack --require-approval never
 ```
 
-CloudWatch Events設定をデプロイします。
-
-```
-cdk deploy *EventsStack --require-approval never
-```
-
-Config設定をデプロイします。
-
-```
-cdk deploy *EventsStack --require-approval never
-```
-
 Proxyサーバーと踏み台サーバーをデプロイします。
 
 ```
@@ -156,6 +144,18 @@ SageMakerノートブックインスタンスをデプロイします。
 
 ```
 cdk deploy *SageMakerStack --require-approval never
+```
+
+CloudWatch Events設定をデプロイします。
+
+```
+cdk deploy *EventsStack --require-approval never
+```
+
+Config設定をデプロイします。
+
+```
+cdk deploy *ConfigStack --require-approval never
 ```
 
 ## WorkSpaces
@@ -190,10 +190,10 @@ aws iam update-account-password-policy \
 
 ### IAMユーザーのパスワードの取得
 
-IAMユーザーのパスワードはCDKデプロイ時に生成され、Secret Managerに格納されています。
-管理者はSecret Managerでパスワードを取得し、ユーザーに連携します。ユーザーは初回ログイン時にパスワードを変更する必要があります。
+IAMユーザーのパスワードは`cdk.context.json`で指定しました。
+このパスワードはCloudFormationのテンプレートにも出力されており、テキストとして閲覧可能は状態にあります。ユーザーは初回ログイン時にパスワードを変更する必要があります。
 
-### RedShiftのパスワードの変更
+### Redshiftのパスワードの変更
 
-RedShiftのパスワードは`cdk.context.json`で指定しました。
+Redshiftのパスワードは`cdk.context.json`で指定しました。
 このパスワードはCloudFormationのテンプレートにも出力されており、テキストとして閲覧可能は状態にあるため、マネージメントコンソールからパスワードを変更して下さい。

@@ -42,7 +42,8 @@ class BucketStack(core.Stack):
             ),
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.KMS,
-            encryption_key=customer_key
+            encryption_key=customer_key,
+            versioned=True
         )
 
         ################

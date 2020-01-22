@@ -7,7 +7,7 @@
   "region": "ap-northeast-1",
   "key_name": "",
   "hosted_zone": "corp.example.com",
-  "default_password": "Password99!",
+  "default_password": "",
   "admin_user_names": [
     "admin-user"
   ],
@@ -35,8 +35,11 @@
     "automated_snapshot_retention_period": 8
   },
   "sagemaker": {
-    "number_of_notebooks1": 1,
+    "number_of_notebooks": 1,
     "instance_type": "ml.t2.medium",
     "notebook_instance_name": "MyNotebook"
-  }
+  },
+  "emails_to_alert": [
+    "sotoiwa@gmail.com"
+  ]
 }
