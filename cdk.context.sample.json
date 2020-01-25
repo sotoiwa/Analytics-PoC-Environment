@@ -5,8 +5,6 @@
   "bucket_suffix": "poc",
   "account": "",
   "region": "ap-northeast-1",
-  "key_name": "",
-  "hosted_zone": "corp.example.com",
   "default_user_password": "",
   "admin_user_names": [
     "admin-user"
@@ -20,6 +18,11 @@
   "data_scientist_user_names": [
     "data-scientist-user"
   ],
+  "proxy_server": {
+    "instance_type": "t2.micro",
+    "key_name": "",
+    "domain": "corp.example.com"
+  },
   "nat_gateway_eips": [
     "0.0.0.0/0"
   ],

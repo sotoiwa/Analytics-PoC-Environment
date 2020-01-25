@@ -32,8 +32,8 @@ global_env = core.Environment(
 )
 props = dict()
 
-test_stack = TestStack(app, '{}-TestStack'.format(prefix), env=env, props=props)
-props = test_stack.outputs
+# test_stack = TestStack(app, '{}-TestStack'.format(prefix), env=env, props=props)
+# props = test_stack.outputs
 
 workspaces_vpc_stack = WorkSpacesVpcStack(app, '{}-WorkSpacesVpcStack'.format(prefix), env=env, props=props)
 props = workspaces_vpc_stack.outputs
@@ -53,18 +53,6 @@ props = iam_stack.outputs
 bucket_stack = BucketStack(app, '{}-BucketStack'.format(prefix), env=env, props=props)
 props = bucket_stack.outputs
 
-proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
-props = proxy_stack.outputs
-
-bastion_stack = BastionStack(app, '{}-BastionStack'.format(prefix), env=env, props=props)
-props = bastion_stack.outputs
-
-redshift_stack = RedshiftStack(app, '{}-RedshiftStack'.format(prefix), env=env, props=props)
-props = redshift_stack.outputs
-
-sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(prefix), env=env, props=props)
-props = sagemaker_stack.outputs
-
 audit_log_stack = AuditLogStack(app, '{}-AuditLogStack'.format(prefix), env=env, props=props)
 props = audit_log_stack.outputs
 
@@ -79,5 +67,17 @@ props = config_stack.outputs
 
 guardduty_stack = GuardDutyStack(app, '{}-GuardDutyStack'.format(prefix), env=env, props=props)
 props = guardduty_stack.outputs
+
+proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
+props = proxy_stack.outputs
+
+# bastion_stack = BastionStack(app, '{}-BastionStack'.format(prefix), env=env, props=props)
+# props = bastion_stack.outputs
+
+sagemaker_stack = SageMakerStack(app, '{}-SageMakerStack'.format(prefix), env=env, props=props)
+props = sagemaker_stack.outputs
+
+redshift_stack = RedshiftStack(app, '{}-RedshiftStack'.format(prefix), env=env, props=props)
+props = redshift_stack.outputs
 
 app.synth()

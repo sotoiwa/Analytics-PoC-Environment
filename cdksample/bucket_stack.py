@@ -22,6 +22,7 @@ class BucketStack(core.Stack):
         ################
         # キーの作成
         ################
+        self.node.try_get_context('proxy_server')['domain']
 
         # キーを作成
         customer_key = kms.Key(
@@ -29,14 +30,62 @@ class BucketStack(core.Stack):
             enable_key_rotation=True,
             alias='CustomerKey'
         )
+        # 先にIAMロールができてないとキーポリシーの追加時にエラーになるので依存性を追加
+        customer_key.node.add_dependency(admin_role)
+        customer_key.node.add_dependency(cost_admin_role)
+        customer_key.node.add_dependency(s3_admin_role)
+        customer_key.node.add_dependency(system_admin_role)
+        customer_key.node.add_dependency(security_audit_role)
+        customer_key.node.add_dependency(kms_admin_role)
+        customer_key.node.add_dependency(data_scientist_role)
 
-        # キーポリシーを設定する
+        # IAMユーザーの許可を有効にするキーポリシー
+        # 自動的に追加されるのでコメントアウト
+        # customer_key.add_to_resource_policy(
+        #     statement=iam.PolicyStatement(
+        #         principals=[
+        #             iam.AccountRootPrincipal()
+        #         ],
+        #         actions=[
+        #             "kms:*"
+        #         ],
+        #         resources=['*']
+        #     )
+        # )
+
+        # 管理者を設定するキーポリシー
         customer_key.add_to_resource_policy(
             statement=iam.PolicyStatement(
                 principals=[
                     iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
                         self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/S3AdminRole'.format(
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/KmsAdminRole'.format(
+                        self.node.try_get_context('account')))
+                ],
+                actions=[
+                    "kms:Create*",
+                    "kms:Describe*",
+                    "kms:Enable*",
+                    "kms:List*",
+                    "kms:Put*",
+                    "kms:Update*",
+                    "kms:Revoke*",
+                    "kms:Disable*",
+                    "kms:Get*",
+                    "kms:Delete*",
+                    "kms:TagResource",
+                    "kms:UntagResource",
+                    "kms:ScheduleKeyDeletion",
+                    "kms:CancelKeyDeletion"
+                ],
+                resources=['*']
+            )
+        )
+        # 使用者を設定するキーポリシー
+        customer_key.add_to_resource_policy(
+            statement=iam.PolicyStatement(
+                principals=[
+                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
                         self.node.try_get_context('account'))),
                     iam.ArnPrincipal('arn:aws:iam::{}:role/SystemAdminRole'.format(
                         self.node.try_get_context('account'))),
@@ -53,26 +102,6 @@ class BucketStack(core.Stack):
                 resources=['*']
             )
         )
-
-        # キーを使った暗号化・復号を許可するIAMポリシー
-        customer_key_encrypt_decrypt_policy = iam.ManagedPolicy(
-            self, 'CustomerKeyEncryptDecryptPolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:DescribeKey",
-                        "kms:Encrypt",
-                        "kms:ReEncrypt*",
-                        "kms:GenerateDataKey*"
-                    ],
-                    resources=[customer_key.key_arn]
-                )
-            ]
-        )
-
-        for role in [admin_role, s3_admin_role, system_admin_role, data_scientist_role]:
-            customer_key_encrypt_decrypt_policy.attach_to_role(role)
 
         ################
         # データ用バケットの作成
@@ -96,20 +125,13 @@ class BucketStack(core.Stack):
                 principals=[
                     iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
                         self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/S3AdminRole'.format(
-                        self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/SystemAdminRole'.format(
-                        self.node.try_get_context('account'))),
                     iam.ArnPrincipal('arn:aws:iam::{}:role/DataScientistRole'.format(
                         self.node.try_get_context('account')))
                 ],
                 actions=[
                     "s3:GetObject*",
                     "s3:GetBucket*",
-                    "s3:List*",
-                    "s3:DeleteObject*",
-                    "s3:PutObject*",
-                    "s3:Abort*"
+                    "s3:List*"
                 ],
                 resources=[
                     data_bucket.bucket_arn,
@@ -196,7 +218,7 @@ class BucketStack(core.Stack):
                     "s3:PutObject"
                 ],
                 resources=[
-                    log_bucket.arn_for_objects("AWSLogs/{}/*".format(self.node.try_get_context('account')))
+                    log_bucket.arn_for_objects('AWSLogs/{}/*'.format(self.node.try_get_context('account')))
                 ],
                 conditions={
                     "StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}
@@ -215,27 +237,6 @@ class BucketStack(core.Stack):
                 ],
                 resources=[
                     log_bucket.bucket_arn
-                ]
-            )
-        )
-
-        # いくつかのIAMロールからの参照を許可するバケットポリシー
-        log_bucket.add_to_resource_policy(
-            permission=iam.PolicyStatement(
-                principals=[
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
-                        self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/SecurityAuditRole'.format(
-                        self.node.try_get_context('account')))
-                ],
-                actions=[
-                    "s3:GetObject*",
-                    "s3:GetBucket*",
-                    "s3:List*"
-                ],
-                resources=[
-                    log_bucket.bucket_arn,
-                    log_bucket.arn_for_objects('*')
                 ]
             )
         )

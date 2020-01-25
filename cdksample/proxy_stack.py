@@ -22,7 +22,7 @@ class ProxyStack(core.Stack):
 
         # IPアドレスをRoute53に登録する
         user_data.add_commands('local_ip=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)')
-        user_data.add_commands('record=proxy.{}'.format(self.node.try_get_context('hosted_zone')))
+        user_data.add_commands('record=proxy.{}'.format(self.node.try_get_context('proxy_server')['domain']))
         user_data.add_commands("""cat <<EOF > /tmp/recordset.json 
 {
   "Changes": [
@@ -168,9 +168,9 @@ EOF""")
         # Proxy用AutoScalingGroup
         proxy_asg = autoscaling.AutoScalingGroup(
             self, 'ProxyAutoScalingGroup',
-            instance_type=ec2.InstanceType('t2.small'),
+            instance_type=ec2.InstanceType(self.node.try_get_context('proxy_server')['instance_type']),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2),
-            key_name=self.node.try_get_context('key_name'),
+            key_name=self.node.try_get_context('proxy_server')['key_name'],
             vpc=vpc,
             user_data=user_data,
             max_capacity=1,

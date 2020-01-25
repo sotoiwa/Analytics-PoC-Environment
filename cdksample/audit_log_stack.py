@@ -32,6 +32,7 @@ class AuditLogStack(core.Stack):
             self, 'CloudTrail',
             bucket=log_bucket,
             enable_file_validation=True,
+            management_events=cloudtrail.ReadWriteType.ALL,
             send_to_cloud_watch_logs=True
         )
 

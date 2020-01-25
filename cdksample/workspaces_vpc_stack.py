@@ -73,7 +73,7 @@ class WorkSpacesVpcStack(core.Stack):
         # プライベートホストゾーンの作成
         hosted_zone = route53.PrivateHostedZone(
             self, 'HostedZone',
-            zone_name=self.node.try_get_context('hosted_zone'),
+            zone_name=self.node.try_get_context('proxy_server')['domain'],
             vpc=vpc
         )
 

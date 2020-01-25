@@ -29,44 +29,6 @@ class IamStack(core.Stack):
         )
         cost_admin_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('job-function/Billing'))
 
-        # S3管理ロール
-        s3_admin_role = iam.Role(
-            self, 'S3AdminRole',
-            role_name='S3AdminRole',
-            assumed_by=iam.AccountRootPrincipal()
-        )
-        s3_admin_role_policy = iam.ManagedPolicy(
-            self, 'S3AdminRolePolicy',
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        "s3:*"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    actions=[
-                        "s3:PutBucketPublicAccessBlock",
-                        "s3:PutAccessPointPolicy"
-                    ],
-                    resources=[
-                        "arn:aws:s3:::*",
-                        "arn:aws:s3:*:*:accesspoint/*"
-                    ]
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    actions=[
-                        "s3:PutAccountPublicAccessBlock"
-                    ],
-                    resources=["*"]
-                )
-            ]
-        )
-        s3_admin_role.add_managed_policy(s3_admin_role_policy)
-
         # システム管理ロール
         system_admin_role = iam.Role(
             self, 'SystemAdminRole',
@@ -78,104 +40,99 @@ class IamStack(core.Stack):
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        "ec2:*",
-                        "workspaces:*",
-                        "redshift:*",
-                        "elasticmapreduce:*",
-                        "sagemaker:*",
-                        "quicksight:*"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    actions=[
-                        "ec2:*Vpc*",
-                        "ec2:AttachVpnGateway",
-                        "ec2:DetachVpnGateway",
-                        "ec2:CreateInternetGateway",
-                        "ec2:ModifySnapshotAttribute",
-                        "ec2:ModifyImageAttribute"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "cloudtrail:LookupEvents",
-                        "cloudtrail:GetTrail",
-                        "cloudtrail:ListTrails",
-                        "cloudtrail:ListPublicKeys",
-                        "cloudtrail:ListTags",
-                        "cloudtrail:GetTrailStatus",
-                        "cloudtrail:GetEventSelectors",
-                        "cloudtrail:GetInsightSelectors",
-                        "cloudtrail:DescribeTrails"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "cloudwatch:DescribeInsightRules",
-                        "cloudwatch:GetDashboard",
-                        "cloudwatch:GetInsightRuleReport",
-                        "cloudwatch:GetMetricData",
-                        "cloudwatch:GetMetricStatistics",
-                        "cloudwatch:ListMetrics",
-                        "cloudwatch:DescribeAnomalyDetectors",
-                        "cloudwatch:DescribeAlarmHistory",
-                        "cloudwatch:DescribeAlarmsForMetric",
-                        "cloudwatch:ListDashboards",
-                        "cloudwatch:ListTagsForResource",
-                        "cloudwatch:DescribeAlarms",
-                        "cloudwatch:GetMetricWidgetImage"
-                    ],
-                    resources=["*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "logs:ListTagsLogGroup",
-                        "logs:DescribeQueries",
-                        "logs:GetLogRecord",
-                        "logs:DescribeLogGroups",
-                        "logs:DescribeLogStreams",
-                        "logs:DescribeSubscriptionFilters",
+                        "ec2:Describe*",
+                        "elasticloadbalancing:Describe*",
+                        "autoscaling:Describe*",
+                        "workspaces:Describe*",
+                        "workspaces:List*",
+                        "sns:Get*",
+                        "sns:List*",
+                        "cloudwatch:Describe*",
+                        "cloudwatch:Get*",
+                        "cloudwatch:List*",
+                        "logs:Describe*",
+                        "logs:Get*",
+                        "logs:List*",
                         "logs:StartQuery",
-                        "logs:DescribeMetricFilters",
                         "logs:StopQuery",
                         "logs:TestMetricFilter",
-                        "logs:GetLogDelivery",
-                        "logs:ListLogDeliveries",
-                        "logs:DescribeExportTasks",
-                        "logs:GetQueryResults",
-                        "logs:GetLogEvents",
                         "logs:FilterLogEvents",
-                        "logs:GetLogGroupFields",
-                        "logs:DescribeResourcePolicies",
-                        "logs:DescribeDestinations"
+                        "events:DescribeRule",
+                        "events:ListRuleNamesByTarget",
+                        "events:ListRules",
+                        "events:ListTargetsByRule",
+                        "events:TestEventPattern",
+                        "events:DescribeEventBus",
+                        "config:Get*",
+                        "config:Describe*",
+                        "config:Deliver*",
+                        "config:List*",
+                        "config:Select*",
+                        "tag:GetResources",
+                        "tag:GetTagKeys",
+                        "cloudtrail:GetTrail",
+                        "cloudtrail:GetTrailStatus",
+                        "cloudtrail:DescribeTrails",
+                        "cloudtrail:ListTrails",
+                        "cloudtrail:LookupEvents",
+                        "cloudtrail:ListTags",
+                        "cloudtrail:ListPublicKeys",
+                        "cloudtrail:GetEventSelectors",
+                        "cloudtrail:GetInsightSelectors",
+                        "s3:GetObject",
+                        "s3:GetBucketLocation",
+                        "s3:ListAllMyBuckets",
+                        "kms:ListAliases",
+                        "lambda:ListFunctions",
+                        "guardduty:Get*",
+                        "guardduty:List*",
+                        "redshift:Describe*",
+                        "redshift:ViewQueriesInConsole",
+                        "elasticmapreduce:Describe*",
+                        "elasticmapreduce:List*",
+                        "elasticmapreduce:ViewEventsFromAllClustersInConsole",
+                        "sdb:Select",
+                        "sagemaker:Describe*",
+                        "sagemaker:List*",
+                        "sagemaker:BatchGetMetrics",
+                        "sagemaker:GetSearchSuggestions",
+                        "sagemaker:Search"
                     ],
                     resources=["*"]
                 ),
                 iam.PolicyStatement(
                     actions=[
-                        "events:DescribeRule",
-                        "events:DescribePartnerEventSource",
-                        "events:DescribeEventSource",
-                        "events:ListEventBuses",
-                        "events:TestEventPattern",
-                        "events:DescribeEventBus",
-                        "events:ListPartnerEventSourceAccounts",
-                        "events:ListRuleNamesByTarget",
-                        "events:ListPartnerEventSources",
-                        "events:ListEventSources",
-                        "events:ListTagsForResource",
-                        "events:ListRules",
-                        "events:ListTargetsByRule"
+                        "ec2:StartInstances",
+                        "ec2:StopInstances"
                     ],
                     resources=["*"]
-                ),
+                )
             ]
         )
         system_admin_role.add_managed_policy(system_admin_role_policy)
+
+        # S3管理ロール
+        s3_admin_role = iam.Role(
+            self, 'S3AdminRole',
+            role_name='S3AdminRole',
+            assumed_by=iam.AccountRootPrincipal()
+        )
+        s3_admin_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('AmazonS3FullAccess'))
+        s3_admin_role_policy = iam.ManagedPolicy(
+            self, 'S3AdminRolePolicy',
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.DENY,
+                    actions=[
+                        "s3:PutAccountPublicAccessBlock",
+                        "s3:PutBucketPublicAccessBlock",
+                        "s3:PutAccessPointPolicy"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        s3_admin_role.add_managed_policy(s3_admin_role_policy)
 
         # セキュリティ監査ロール
         security_audit_role = iam.Role(
@@ -188,25 +145,55 @@ class IamStack(core.Stack):
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        "cloudtrail:*",
-                        "cloudwatch:*",
-                        "logs:*",
-                        "events:*",
-                        "config:*",
-                        "guardduty:*",
-                        "s3:ListAllMyBuckets"
+                        "sns:Get*",
+                        "sns:List*",
+                        "cloudwatch:Describe*",
+                        "cloudwatch:Get*",
+                        "cloudwatch:List*",
+                        "logs:Describe*",
+                        "logs:Get*",
+                        "logs:List*",
+                        "logs:StartQuery",
+                        "logs:StopQuery",
+                        "logs:TestMetricFilter",
+                        "logs:FilterLogEvents",
+                        "events:DescribeRule",
+                        "events:ListRuleNamesByTarget",
+                        "events:ListRules",
+                        "events:ListTargetsByRule",
+                        "events:TestEventPattern",
+                        "events:DescribeEventBus",
+                        "config:Get*",
+                        "config:Describe*",
+                        "config:Deliver*",
+                        "config:List*",
+                        "config:Select*",
+                        "tag:GetResources",
+                        "tag:GetTagKeys",
+                        "cloudtrail:GetTrail",
+                        "cloudtrail:GetTrailStatus",
+                        "cloudtrail:DescribeTrails",
+                        "cloudtrail:ListTrails",
+                        "cloudtrail:LookupEvents",
+                        "cloudtrail:ListTags",
+                        "cloudtrail:ListPublicKeys",
+                        "cloudtrail:GetEventSelectors",
+                        "cloudtrail:GetInsightSelectors",
+                        "s3:GetObject",
+                        "s3:GetBucketLocation",
+                        "s3:ListAllMyBuckets",
+                        "kms:ListAliases",
+                        "lambda:ListFunctions",
+                        "guardduty:Get*",
+                        "guardduty:List*"
                     ],
                     resources=["*"]
                 ),
                 iam.PolicyStatement(
                     actions=[
-                        "s3:ListBucket"
-                    ],
-                    resources=["arn:aws:s3:::*"]
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        "s3:GetObject"
+                        "s3:GetObject*",
+                        "s3:GetBucket*",
+                        "s3:List*"
                     ],
                     resources=[
                         'arn:aws:s3:::log-{}-{}'.format(
@@ -229,16 +216,8 @@ class IamStack(core.Stack):
             role_name='KmsAdminRole',
             assumed_by=iam.AccountRootPrincipal()
         )
-        kms_admin_role_policy = iam.ManagedPolicy(
-            self, 'KmsAdminRolePolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=["kms:*"],
-                    resources=["*"]
-                )
-            ]
-        )
-        kms_admin_role.add_managed_policy(kms_admin_role_policy)
+        kms_admin_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name('AWSKeyManagementServicePowerUser'))
 
         # 分析ロール作成
         data_scientist_role = iam.Role(
@@ -246,14 +225,17 @@ class IamStack(core.Stack):
             role_name='DataScientistRole',
             assumed_by=iam.AccountRootPrincipal()
         )
+        data_scientist_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name('AmazonRedshiftFullAccess'))
+        data_scientist_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name('AmazonSageMakerFullAccess'))
+        data_scientist_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name('AmazonElasticMapReduceFullAccess'))
         data_scientist_role_policy = iam.ManagedPolicy(
             self, 'DataScientistRolePolicy',
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        "redshift:*",
-                        "elasticmapreduce:*",
-                        "sagemaker:*",
                         "quicksight:*"
                     ],
                     resources=["*"]
@@ -267,7 +249,7 @@ class IamStack(core.Stack):
         ################
 
         # 全体管理者グループ
-        # 全体管理ロールにスイッチ可能
+        # 全体管理ロールを含む全てのロールにスイッチ可能
         admin_group = iam.Group(
             self, 'AdminGroup',
             group_name='AdminGroup'
@@ -280,7 +262,13 @@ class IamStack(core.Stack):
                         "sts:AssumeRole"
                     ],
                     resources=[
-                        admin_role.role_arn
+                        admin_role.role_arn,
+                        cost_admin_role.role_arn,
+                        system_admin_role.role_arn,
+                        s3_admin_role.role_arn,
+                        security_audit_role.role_arn,
+                        kms_admin_role.role_arn,
+                        data_scientist_role.role_arn
                     ]
                 )
             ]
@@ -288,7 +276,7 @@ class IamStack(core.Stack):
         admin_group.add_managed_policy(admin_group_policy)
 
         # 環境管理者グループ
-        # コスト管理ロール、S3管理ロール、システム管理ロールにスイッチ可能
+        # コスト管理ロール、システム管理ロール、S3管理ロールにスイッチ可能
         environment_admin_group = iam.Group(
             self, 'EnvironmentAdminGroup',
             group_name='EnvironmentAdminGroup'
@@ -299,8 +287,8 @@ class IamStack(core.Stack):
                 iam.PolicyStatement(
                     actions=["sts:AssumeRole"],
                     resources=[
-                        system_admin_role.role_arn,
                         cost_admin_role.role_arn,
+                        system_admin_role.role_arn,
                         s3_admin_role.role_arn
                     ]
                 )
@@ -437,7 +425,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        # カスタマー管理ポリシーをグループにアタッチ
+        # カスタマー管理ポリシーを全てのグループにアタッチ
         for group in [admin_group, environment_admin_group, security_audit_group, data_scientist_group]:
             group.add_managed_policy(password_mfa_policy)
 
@@ -461,7 +449,7 @@ class IamStack(core.Stack):
                 )
             ]
         )
-        # カスタマー管理ポリシーをグループにアタッチ
+        # カスタマー管理ポリシーをすべてのグループにアタッチ
         for group in [admin_group, environment_admin_group, security_audit_group, data_scientist_group]:
             group.add_managed_policy(ip_address_policy)
 

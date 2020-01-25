@@ -67,13 +67,16 @@ pip install -r requirements.txt
 |key_name|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
 |hosted_zone|`corp.example.com`|Workspacesドメインのドメインを指定します。|
 |nat_gateway_eips|`0.0.0.0/0`|NATゲートウェイが作成されてから指定するため、デフォルトのままにします。|
+|default_user_password|（設定必須）|IAMユーザーのデフォルトのパスワード。|
 |admin_user_names|`admin-user`|管理者ユーザーの名前のリスト。|
 |environment_admin_user_names|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定します。|
 |security_audit_user_names|`security-audit-user`|セキュリティ監査者ユーザーの名前のリストを指定します。|
 |data_scientist_user_names|`data-scientist-user`|分析者ユーザーの名前のリストを指定します。|
-|redshift.master_user_password|（設定必須）|RedShiftのマスターユーザーのパスワードを指定します。下記のパスワード要件があるため注意して下さい。|
+|redshift.****||Redshiftの各パラメータを指定して下さい。マスターユーザーのパスワードの指定は必須です。下記のパスワード要件があるため注意して下さい。|
+|sagamaker.****||SageMakerの各パラメータを指定して下さい。|
+|emales_to_alert|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定します。|
 
-（補足）RedShiftのマスターユーザーのパスワード要件
+（補足）Redshiftのマスターユーザーのパスワード要件
 
 - 値は 8 ～ 64 文字長である必要があります。
 - 値には、少なくとも 1 つの大文字が含まれている必要があります。
@@ -95,21 +98,6 @@ VPCをデプロイします。
 cdk deploy *VpcStack *VpcPeeringStack --require-approval never
 ```
 
-WorkSpaces用のVPCのNAT GatewayにアタッチされているEIPのアドレスを、マネージメントコンソールまたはAWS CLIで確認します。
-
-```
-aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select( .Value | test("WorkSpaces") ) ] | length > 0 ) | .NatGatewayAddresses[].PublicIp'
-```
-
-このアドレスを`cdk.context.json`に記載します。1つめのアドレスと2つめのアドレスの間にはカンマが必要です。
-
-```
-  "nat_gateway_eips": [
-    "18.176.193.136", 
-    "3.115.222.230"
-  ],
-```
-
 IAMユーザーをデプロイします。
 
 ```
@@ -120,6 +108,18 @@ cdk deploy *IamStack --require-approval never
 
 ```
 cdk deploy *BucketStack --require-approval never
+```
+
+監査ログ設定をデプロイします。
+
+```
+cdk deploy *AuditLogStack --require-approval never
+```
+
+Events、Config、GuardDutyの設定をデプロイします。
+
+```
+cdk deploy *EventsStack *ConfigStack *GuardDutyStack--require-approval never
 ```
 
 Proxyサーバーと踏み台サーバーをデプロイします。
@@ -140,16 +140,25 @@ SageMakerノートブックインスタンスをデプロイします。
 cdk deploy *SageMakerStack --require-approval never
 ```
 
-監査ログ設定をデプロイします。
+IPアドレス制限を有効化します。WorkSpaces用のVPCのNAT GatewayにアタッチされているEIPのアドレスを、マネージメントコンソールまたはAWS CLIで確認します。
 
 ```
-cdk deploy *AuditLogStack --require-approval never
+aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select( .Value | test("WorkSpaces") ) ] | length > 0 ) | .NatGatewayAddresses[].PublicIp'
 ```
 
-Events、Config、GuardDutyの設定をデプロイします。
+このアドレスを`cdk.context.json`に記載します。1つめのアドレスと2つめのアドレスの間にはカンマが必要です。
 
 ```
-cdk deploy *EventsStack *ConfigStack *GuardDutyStack--require-approval never
+  "nat_gateway_eips": [
+    "18.176.193.136", 
+    "3.115.222.230"
+  ],
+```
+
+IAM設定を更新します。
+
+```
+cdk deploy *IamStack --require-approval never
 ```
 
 ## WorkSpaces

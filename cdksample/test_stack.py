@@ -2,7 +2,8 @@ from aws_cdk import (
     core,
     aws_iam as iam,
     aws_s3 as s3,
-    aws_secretsmanager as secretsmanager
+    aws_secretsmanager as secretsmanager,
+    aws_logs as logs
 )
 
 
@@ -10,6 +11,21 @@ class TestStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, props, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
+
+        log_group = logs.LogGroup.from_log_group_name(
+            self, 'LogGroup',
+            log_group_name='PoC-AuditLogStack-CloudTrailLogGroupABA1792E-OPWTXPIPCCEY'
+        )
+
+        # メトリックフィルター
+        logs.MetricFilter(
+            self, "MetricFilter",
+            log_group=log_group,
+            metric_namespace="MyApp",
+            metric_name="Latency",
+            filter_pattern=logs.FilterPattern.exists("$.latency"),
+            metric_value="$.latency"
+        )
 
         # テスト用のS3バケット
         test_bucket = s3.Bucket(
