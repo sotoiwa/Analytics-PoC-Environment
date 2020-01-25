@@ -58,23 +58,22 @@ pip install -r requirements.txt
 ### 環境に合わせたカスタマイズ
 
 `cdk.context.sample.json`を`cdk.context.json`としてコピーします。
-以下パラメータを自分の環境に合わせてカスタマイズします。
+以下パラメータを自分の環境に合わせてカスタマイズします。特に以下のパラメータは必須です。
 
 |パラメータ|デフォルト値|備考|
 |---|---|---|
-|account|（設定必須）|環境をデプロイするAWSアカウントを指定します。|
-|region|`ap-northeast-1`|環境をデプロイするリージョンを指定します。|
-|key_name|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
-|hosted_zone|`corp.example.com`|Workspacesドメインのドメインを指定します。|
-|nat_gateway_eips|`0.0.0.0/0`|NATゲートウェイが作成されてから指定するため、デフォルトのままにします。|
-|default_user_password|（設定必須）|IAMユーザーのデフォルトのパスワード。|
-|admin_user_names|`admin-user`|管理者ユーザーの名前のリスト。|
-|environment_admin_user_names|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定します。|
-|security_audit_user_names|`security-audit-user`|セキュリティ監査者ユーザーの名前のリストを指定します。|
-|data_scientist_user_names|`data-scientist-user`|分析者ユーザーの名前のリストを指定します。|
-|redshift.****||Redshiftの各パラメータを指定して下さい。マスターユーザーのパスワードの指定は必須です。下記のパスワード要件があるため注意して下さい。|
-|sagamaker.****||SageMakerの各パラメータを指定して下さい。|
-|emales_to_alert|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定します。|
+|`account`|（設定必須）|環境をデプロイするAWSアカウントを指定します。|
+|`region`|`ap-northeast-1`|環境をデプロイするリージョンを指定します。|
+|`proxy.key_name`|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
+|`nat_gateway_eips`|`0.0.0.0/0`|管理コンソールへのアクセスを許可するIPアドレスのリストを指定します。NATゲートウェイが作成されてから指定するため、デフォルトのままにします。|
+|`default_user_password`|（設定必須）|IAMユーザーのデフォルトのパスワードを指定します。|
+|`admin_user_names`|`admin-user`|管理者ユーザーの名前のリスト。|
+|`environment_admin_user_names`|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定します。|
+|`security_audit_user_names`|`security-audit-user`|セキュリティ監査者ユーザーの名前のリストを指定します。|
+|`data_scientist_user_names`|`data-scientist-user`|分析者ユーザーの名前のリストを指定します。|
+|`redshift.master_user_password`|（設定必須）|Redshiftのマスターユーザーのパスワードを指定します。下記のパスワード要件があるため注意して下さい。|
+|`emales_to_alert`|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定します。|
+|`guardduty_already_enabled`|`false`|GuardDutyが既に有効な環境かどうかを指定します。|
 
 （補足）Redshiftのマスターユーザーのパスワード要件
 
