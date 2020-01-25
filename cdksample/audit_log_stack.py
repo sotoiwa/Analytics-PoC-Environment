@@ -1,7 +1,7 @@
 from aws_cdk import (
     core,
-    aws_ec2 as ec2,
-    aws_cloudtrail as cloudtrail
+    aws_cloudtrail as cloudtrail,
+    aws_ec2 as ec2
 )
 
 
