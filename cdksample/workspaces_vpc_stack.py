@@ -54,13 +54,13 @@ class WorkSpacesVpcStack(core.Stack):
         )
 
         # CloudWatchのVPCエンドポイントの作成
-        cloudwatch_endpoint = vpc.add_interface_endpoint(
-            id='CloudWatchEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
-            private_dns_enabled=True,
-            security_groups=[endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
-        )
+        # cloudwatch_endpoint = vpc.add_interface_endpoint(
+        #     id='CloudWatchEndpoint',
+        #     service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
+        #     private_dns_enabled=True,
+        #     security_groups=[endpoint_sg],
+        #     subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
+        # )
         # CloudWatch LogsのVPCエンドポイントの作成
         cloudwatch_logs_endpoint = vpc.add_interface_endpoint(
             id='CloudWatchLogsEndpoint',

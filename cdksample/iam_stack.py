@@ -398,16 +398,16 @@ class IamStack(core.Stack):
                 iam.PolicyStatement(
                     actions=[
                         "iam:ChangePassword",
-                        # "iam:CreateAccessKey",
+                        "iam:CreateAccessKey",
                         "iam:CreateVirtualMFADevice",
                         "iam:DeactivateMFADevice",
-                        # "iam:DeleteAccessKey",
+                        "iam:DeleteAccessKey",
                         "iam:DeleteVirtualMFADevice",
                         "iam:EnableMFADevice",
                         "iam:GetAccountPasswordPolicy",
-                        # "iam:UpdateAccessKey",
-                        # "iam:UpdateSigningCertificate",
-                        # "iam:UploadSigningCertificate",
+                        "iam:UpdateAccessKey",
+                        "iam:UpdateSigningCertificate",
+                        "iam:UploadSigningCertificate",
                         "iam:UpdateLoginProfile",
                         "iam:ResyncMFADevice"
                     ],
@@ -443,7 +443,7 @@ class IamStack(core.Stack):
                     resources=['*'],
                     conditions={
                         'NotIpAddress': {
-                            'aws:SourceIp': self.node.try_get_context('nat_gateway_eips')
+                            'aws:SourceIp': self.node.try_get_context('allow_ips')
                         }
                     }
                 )

@@ -6,20 +6,41 @@
 - デプロイは管理者権限を持つIAMユーザーの権限で行うため、IAMユーザーを用意して下さい。
 - あらかじめ、環境をデプロイするリージョンにキーペアを用意して下さい。このキーペアはProxyインスタンスに設定します。
 - EIPを4つ使用するため、既にVPCを作成済みの環境ではアカウントのEIP数の上限（デフォルトでは5）に引っかかる可能性があります。必要に応じてEIP数の上限緩和申請をして下さい。
-- ローカルPC（Mac）からCDKでのデプロイを実行する場合、Node.jsとPythonの実行環境が必要です。
-  - 他にも、この手順の全ての操作を実行するためには、awscli、jq、git、cfsslも必要です。
-
-```
-brew install python
-brew install node
-brew install awscli
-brew install jq
-brew install git
-brew install cfssl
-```
-
-- Windowsの場合は環境のコマンドラインツールのセットアップが難しいため、Cloud9環境からの実行がおすすめです。下記の手順を参考にしてCloud9環境をセットアップして下さい。
+- CDKを実行する環境としてCloud9環境を使用します。以下の手順に従ってCloud9をセットアップして下さい。
   - [Cloud9環境のセットアップ](cloud9.md)
+
+## アカウントの基本的な設定
+
+アカウントレベルでの基本的な設定をCDKではなくCLIで行います。
+
+IAMユーザーのパスワードポリシーを設定します。
+
+```
+aws iam update-account-password-policy \
+  --minimum-password-length 8 \
+  --require-symbols \
+  --require-numbers \
+  --require-uppercase-characters \
+  --require-lowercase-characters \
+  --allow-users-to-change-password \
+  --max-password-age 30 \
+  --password-reuse-prevention 10
+```
+
+アカウントレベルでS3のブロックパブリックアクセスを有効にします。
+
+```
+ACCOUNT_ID=<account id>
+aws s3control put-public-access-block \
+  --account-id ${ACCOUNT_ID} \
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+```
+
+GuardDutyを有効化します。
+
+```
+aws guardduty create-detector --enable
+```
 
 ## 環境デプロイ手順
 
@@ -65,7 +86,7 @@ pip install -r requirements.txt
 |`account`|（設定必須）|環境をデプロイするAWSアカウントを指定します。|
 |`region`|`ap-northeast-1`|環境をデプロイするリージョンを指定します。|
 |`proxy.key_name`|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
-|`nat_gateway_eips`|`0.0.0.0/0`|管理コンソールへのアクセスを許可するIPアドレスのリストを指定します。NATゲートウェイが作成されてから指定するため、デフォルトのままにします。|
+|`allow_ips`|`0.0.0.0/0`|マネージメントコンソールへのアクセスを許可するIPアドレスのリストを指定します。NATゲートウェイが作成されてから指定します。|
 |`default_user_password`|（設定必須）|IAMユーザーのデフォルトのパスワードを指定します。|
 |`admin_user_names`|`admin-user`|管理者ユーザーの名前のリスト。|
 |`environment_admin_user_names`|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定します。|
@@ -73,7 +94,6 @@ pip install -r requirements.txt
 |`data_scientist_user_names`|`data-scientist-user`|分析者ユーザーの名前のリストを指定します。|
 |`redshift.master_user_password`|（設定必須）|Redshiftのマスターユーザーのパスワードを指定します。下記のパスワード要件があるため注意して下さい。|
 |`emales_to_alert`|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定します。|
-|`guardduty_already_enabled`|`false`|GuardDutyが既に有効な環境かどうかを指定します。|
 
 （補足）Redshiftのマスターユーザーのパスワード要件
 
@@ -115,7 +135,7 @@ cdk deploy *BucketStack --require-approval never
 cdk deploy *AuditLogStack --require-approval never
 ```
 
-Events、Config、GuardDutyの設定をデプロイします。
+Events、Config設定をデプロイします。
 
 ```
 cdk deploy *EventsStack *ConfigStack *GuardDutyStack--require-approval never
@@ -148,7 +168,7 @@ aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select(
 このアドレスを`cdk.context.json`に記載します。1つめのアドレスと2つめのアドレスの間にはカンマが必要です。
 
 ```
-  "nat_gateway_eips": [
+  "allow_ips": [
     "18.176.193.136", 
     "3.115.222.230"
   ],
@@ -171,24 +191,6 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 SAP環境についてはクイックスタートを使ってマネージメントコンソールから構築します。
 
 - [AWS クラウドでの SAP HANA: クイックスタートリファレンスデプロイ](https://docs.aws.amazon.com/ja_jp/quickstart/latest/sap-hana/welcome.html)
-
-## パスワード
-
-### IAMユーザーのパスワードポリシー
-
-以下のポリシーを設定します。
-
-```
-aws iam update-account-password-policy \
-  --minimum-password-length 8 \
-  --require-symbols \
-  --require-numbers \
-  --require-uppercase-characters \
-  --require-lowercase-characters \
-  --allow-users-to-change-password \
-  --max-password-age 30 \
-  --password-reuse-prevention 10
-```
 
 ### IAMユーザーのパスワードの取得
 

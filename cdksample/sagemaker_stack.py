@@ -36,18 +36,19 @@ class SageMakerStack(core.Stack):
         )
 
         # Notebookインスタンス
-        for i in range(self.node.try_get_context('sagemaker')['number_of_notebooks']):
+        i = 0
+        for notebook_instance_name in self.node.try_get_context('sagemaker')['notebook_instance_names']:
             notebook_instance = sagemaker.CfnNotebookInstance(
-                self, 'NotebookInstance{}'.format(i + 1),
+                self, '{}NotebookInstance'.format(notebook_instance_name),
                 instance_type=self.node.try_get_context('sagemaker')['instance_type'],
-                notebook_instance_name='{}{}'.format(
-                    self.node.try_get_context('sagemaker')['notebook_instance_name'], i + 1),
-                subnet_id=vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids[i % 2],
+                notebook_instance_name=notebook_instance_name,
+                subnet_id=vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids[i],
                 security_group_ids=[notebook_sg.security_group_id],
                 role_arn=notebook_execution_role.role_arn,
                 direct_internet_access='Disabled',
                 kms_key_id=customer_key.key_id
             )
+            i += 1
 
         self.output_props = props.copy()
 

@@ -5,7 +5,6 @@ from aws_cdk import core
 from cdksample.test_stack import TestStack
 from cdksample.workspaces_vpc_stack import WorkSpacesVpcStack
 from cdksample.analytics_vpc_stack import AnalyticsVpcStack
-from cdksample.sap_vpc_stack import SapVpcStack
 from cdksample.vpc_peering_stack import VpcPeeringStack
 from cdksample.iam_stack import IamStack
 from cdksample.bucket_stack import BucketStack
@@ -17,7 +16,6 @@ from cdksample.audit_log_stack import AuditLogStack
 from cdksample.events_stack import EventsStack
 from cdksample.global_events_stack import GlobalEventsStack
 from cdksample.config_stack import ConfigStack
-from cdksample.guardduty_stack import GuardDutyStack
 
 
 app = core.App()
@@ -41,9 +39,6 @@ props = workspaces_vpc_stack.outputs
 analytics_vpc_stack = AnalyticsVpcStack(app, '{}-AnalyticsVpcStack'.format(prefix), env=env, props=props)
 props = analytics_vpc_stack.outputs
 
-sap_vpc_stack = SapVpcStack(app, '{}-SapVpcStack'.format(prefix), env=env, props=props)
-props = sap_vpc_stack.outputs
-
 vpc_peering_stack = VpcPeeringStack(app, '{}-VpcPeeringStack'.format(prefix), env=env, props=props)
 props = vpc_peering_stack.outputs
 
@@ -64,9 +59,6 @@ props = global_events_stack.outputs
 
 config_stack = ConfigStack(app, '{}-ConfigStack'.format(prefix), env=env, props=props)
 props = config_stack.outputs
-
-guardduty_stack = GuardDutyStack(app, '{}-GuardDutyStack'.format(prefix), env=env, props=props)
-props = guardduty_stack.outputs
 
 proxy_stack = ProxyStack(app, '{}-ProxyStack'.format(prefix), env=env, props=props)
 props = proxy_stack.outputs

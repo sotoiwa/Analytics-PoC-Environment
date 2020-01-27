@@ -36,6 +36,16 @@ class EventsStack(core.Stack):
         for email in emails:
             alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
 
+        # GuardDutyの通知設定
+        guardduty_rule = events.Rule(
+            self, 'GuardDutyRule',
+            event_pattern=events.EventPattern(
+                source=['aws.guardduty'],
+                detail_type=['GuardDuty Finding']
+            )
+        )
+        guardduty_rule.add_target(targets.SnsTopic(alert_topic))
+
         # EC2の監視対象イベントのリスト
         ec2_event_names = [
             "AttachInternetGateway",
@@ -46,7 +56,7 @@ class EventsStack(core.Stack):
             "DeleteRoute",
             "DeleteRouteTable",
             "DeleteDhcpOptions",
-            "DisassociateRouteTable"
+            "DisassociateRouteTable",
             "RunInstances",
             "CreateInstances",
             "LaunchInstances",

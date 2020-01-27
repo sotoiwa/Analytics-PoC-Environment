@@ -34,8 +34,8 @@
 
   |項目|設定値|備考|
   |---|---|---|
-  |サブネット1|Isolatedサブネット||
-  |サブネット2|Isolatedサブネット||
+  |サブネット1|Isolatedサブネット|別途VPCコンソールを開いてサブネットのIDを確認して下さい|
+  |サブネット2|Isolatedサブネット|別途VPCコンソールを開いてサブネットのIDを確認して下さい|
   |セルフサービスアクセス許可の有効化|いいえ||
   |Amazon WorkDocs の有効化|いいえ||
 
@@ -253,9 +253,9 @@ WorkSpacesクライアントを起動します。
   |項目|設定値|備考|
   |---|---|---|
   |プロキシサーバーを使う|オン||
-  |アドレス|`proxy.corp.example.com`||
+  |アドレス|`proxy.example.com`|`proxy.<cdk.context.jsonのproxy.domainで指定したドメイン名>`を指定する|
   |ポート|`3128`||
 
-![](images/workspaces05.png)
+![](2020-01-26-01-14-55.png)
 
 1. `https://<アカウントID>.signin.aws.amazon.com/console`にアクセスし、アクセスできることを確認します。

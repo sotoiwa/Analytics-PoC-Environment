@@ -21,9 +21,9 @@
   "proxy_server": {
     "instance_type": "t2.micro",
     "key_name": "",
-    "domain": "corp.example.com"
+    "domain": "example.com"
   },
-  "nat_gateway_eips": [
+  "allow_ips": [
     "0.0.0.0/0"
   ],
   "redshift": {
@@ -38,9 +38,10 @@
     "automated_snapshot_retention_period": 8
   },
   "sagemaker": {
-    "number_of_notebooks": 1,
     "instance_type": "ml.t2.medium",
-    "notebook_instance_name": "MyNotebook"
+    "notebook_instance_names": [
+      "MyNotebook1"
+    ]
   },
   "emails_to_alert": [
     "sotoiwa@gmail.com"

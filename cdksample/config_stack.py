@@ -14,7 +14,6 @@ class ConfigStack(core.Stack):
 
         alert_topic = props['alert_topic']
         workspaces_vpc = props['workspaces_vpc']
-        sap_vpc = props['sap_vpc']
         log_bucket = props['log_bucket']
 
         default_vpc = ec2.Vpc.from_lookup(
@@ -146,7 +145,7 @@ class ConfigStack(core.Stack):
             config_rule_name='internet-gateway-authorized-vpc-only',
             description='インターネットゲートウェイ (IGW) が承認された Amazon Virtual Private Cloud (VPC) にのみ接続されていることを確認します。IGW が承認された VPC に接続されていない場合、ルールは NON_COMPLIANT です。',
             input_parameters={
-                "AuthorizedVpcIds": "{},{},{}".format(default_vpc.vpc_id, workspaces_vpc.vpc_id, sap_vpc.vpc_id)
+                "AuthorizedVpcIds": "{},{}".format(default_vpc.vpc_id, workspaces_vpc.vpc_id)
             }
         )
         internet_gateway_authorized_vpc_only_rule.scope_to_resource('AWS::EC2::InternetGateway')

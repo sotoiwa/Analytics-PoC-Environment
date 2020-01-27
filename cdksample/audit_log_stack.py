@@ -14,10 +14,9 @@ class AuditLogStack(core.Stack):
         log_bucket = props['log_bucket']
         workspaces_vpc = props['workspaces_vpc']
         analytics_vpc = props['analytics_vpc']
-        sap_vpc = props['sap_vpc']
 
         # VPC FlowLogsを有効化
-        for vpc in [workspaces_vpc, analytics_vpc, sap_vpc]:
+        for vpc in [workspaces_vpc, analytics_vpc]:
             flowlogs = ec2.CfnFlowLog(
                 self, 'FlowLogs{}'.format(vpc.to_string()),
                 resource_id=vpc.vpc_id,

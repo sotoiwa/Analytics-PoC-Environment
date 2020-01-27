@@ -13,6 +13,7 @@ class RedshiftStack(core.Stack):
 
         vpc = props['analytics_vpc']
         endpoint_sg = props['analytics_endpoint_sg']
+        workspaces_sg = props['workspaces_workspaces_sg']
         customer_key = props['customer_key']
 
         # 参考リンク
@@ -25,7 +26,7 @@ class RedshiftStack(core.Stack):
             assumed_by=iam.ServicePrincipal('redshift.amazonaws.com')
         )
 
-        # セキュリティーグループ
+        # セキュリティグループ
         redshift_sg = ec2.SecurityGroup(
             self, 'RedshiftSecurityGroup',
             vpc=vpc
@@ -34,6 +35,11 @@ class RedshiftStack(core.Stack):
         redshift_sg.connections.allow_to(
             other=endpoint_sg,
             port_range=ec2.Port.all_traffic()
+        )
+        # WorkSpacesのセキュリティグループからのアクセスを許可
+        redshift_sg.connections.allow_from(
+            other=workspaces_sg,
+            port_range=ec2.Port.tcp(self.node.try_get_context('redshift')['port'])
         )
 
         # クラスターパラメーターグループ
