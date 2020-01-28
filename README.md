@@ -180,11 +180,21 @@ IAM設定を更新します。
 cdk deploy *IamStack --require-approval never
 ```
 
+Redshiftクラスターの拡張VPCルーティングを有効にします。クラスター識別子は`cdk.context.json`の`redshift.cluster_identifier`で指定したものです。
+
+```
+cluster_identifier=<クラスター識別子>
+aws redshift modify-cluster \
+  --cluster-identifier ${cluster_identifier} \
+  --enhanced-vpc-routing
+```
+
 ## WorkSpaces
 
 WorkSpacesについてはCDKではなくマネージメントコンソールからの払い出しを行います。
 
-- [WorkSpacesのセットアップ](workspaces.md)
+- [WorkSpacesの払い出し](workspaces_deploy.md)
+- [WorkSpacesの利用](workspaces_use.md)
 
 ## SAP
 

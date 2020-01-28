@@ -14,6 +14,7 @@ class SageMakerStack(core.Stack):
         vpc = props['analytics_vpc']
         endpoint_sg = props['analytics_endpoint_sg']
         customer_key = props['customer_key']
+        data_bucket = props['data_bucket']
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/build-fast-flexible-secure-machine-learning-platform-using-amazon-sagemaker-and-amazon-redshift/
@@ -23,6 +24,27 @@ class SageMakerStack(core.Stack):
             self, 'NotebookExecutionRole',
             assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com')
         )
+        notebook_execution_role_policy = iam.ManagedPolicy(
+            self, 'NotebookExecutionRolePolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:*"
+                    ],
+                    not_resources=[
+                        'arn:aws:s3:::log-{}-{}'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                        'arn:aws:s3:::log-{}-{}/*'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                    ]
+                ),
+            ]
+        )
+        notebook_execution_role.add_managed_policy(notebook_execution_role_policy)
 
         # セキュリティーグループ
         notebook_sg = ec2.SecurityGroup(

@@ -15,7 +15,7 @@ class WorkSpacesVpcStack(core.Stack):
 
         vpc = ec2.Vpc(
             self, 'VPC',
-            cidr='10.1.0.0/16',
+            cidr=self.node.try_get_context('workspaces_vpc_cidr'),
             max_azs=2,
             subnet_configuration=[
                 ec2.SubnetConfiguration(

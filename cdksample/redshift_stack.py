@@ -25,6 +25,27 @@ class RedshiftStack(core.Stack):
             self, 'RedshiftRole',
             assumed_by=iam.ServicePrincipal('redshift.amazonaws.com')
         )
+        redshift_role_policy = iam.ManagedPolicy(
+            self, 'RedshiftRolePolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:*"
+                    ],
+                    not_resources=[
+                        'arn:aws:s3:::log-{}-{}'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                        'arn:aws:s3:::log-{}-{}/*'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                    ]
+                ),
+            ]
+        )
+        redshift_role.add_managed_policy(redshift_role_policy)
 
         # セキュリティグループ
         redshift_sg = ec2.SecurityGroup(

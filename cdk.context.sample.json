@@ -5,6 +5,8 @@
   "bucket_suffix": "poc",
   "account": "",
   "region": "ap-northeast-1",
+  "workspaces_vpc_cidr": "10.1.0.0/16",
+  "analytics_vpc_cidr": "10.2.0.0/16",
   "default_user_password": "",
   "admin_user_names": [
     "admin-user"

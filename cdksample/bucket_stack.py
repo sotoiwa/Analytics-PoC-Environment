@@ -154,7 +154,7 @@ class BucketStack(core.Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
 
-        # Redshiftからの書き込みを許可するバケットポリシー
+        # Redshiftサービスからの書き込みを許可するバケットポリシー
         # https://docs.aws.amazon.com/ja_jp/redshift/latest/mgmt/db-auditing.html#db-auditing-manage-log-files
         redshift_logging_account_map = {
             'us-east-1': '193672423079',
@@ -206,7 +206,7 @@ class BucketStack(core.Stack):
             )
         )
 
-        # VPCフローログ、CloudTrail、Config用からの書き込みを許可するバケットポリシーを明示的に設定する
+        # VPCフローログ、CloudTrail、Configからの書き込みを許可するバケットポリシーを明示的に設定する
         log_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
                 principals=[
