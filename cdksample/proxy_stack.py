@@ -2,7 +2,8 @@ from aws_cdk import (
     core,
     aws_autoscaling as autoscaling,
     aws_ec2 as ec2,
-    aws_iam as iam
+    aws_iam as iam,
+    aws_route53 as route53
 )
 
 
@@ -12,9 +13,14 @@ class ProxyStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['workspaces_vpc']
-        workspaces_sg = props['workspaces_workspaces_sg']
-        endpoint_sg = props['workspaces_endpoint_sg']
-        hosted_zone = props['workspaces_hosted_zone']
+        proxy_sg = props['proxy_sg']
+
+        # プライベートホストゾーンの作成
+        hosted_zone = route53.PrivateHostedZone(
+            self, 'HostedZone',
+            zone_name=self.node.try_get_context('proxy_server')['domain'],
+            vpc=vpc
+        )
 
         # ユーザーデータ
         user_data = ec2.UserData.for_linux()
@@ -178,20 +184,8 @@ EOF""")
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE),
         )
 
-        # セキュリティーグループの設定
-        proxy_asg.connections.allow_from_any_ipv4(
-            ec2.Port.tcp(22)
-        )
-        # WorksSpacesインスタンスからのアクセスを許可
-        proxy_asg.connections.allow_from(
-            other=workspaces_sg,
-            port_range=ec2.Port.tcp(3128)
-        )
-        # VPCエンドポイントへのアクセスを許可
-        proxy_asg.connections.allow_to(
-            other=endpoint_sg,
-            port_range=ec2.Port.all_traffic()
-        )
+        # セキュリティグループを追加
+        proxy_asg.add_security_group(proxy_sg)
 
         # CloudWatchエージェント用のポリシーをアタッチ
         proxy_asg.role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name('CloudWatchAgentServerPolicy'))
@@ -209,7 +203,6 @@ EOF""")
         proxy_asg.role.add_managed_policy(route53_policy)
 
         self.output_props = props.copy()
-        self.output_props['workspaces_proxy_sg'] = proxy_asg.connections.security_groups[0]
 
     @property
     def outputs(self):

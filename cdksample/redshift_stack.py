@@ -12,56 +12,13 @@ class RedshiftStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['analytics_vpc']
-        endpoint_sg = props['analytics_endpoint_sg']
-        workspaces_sg = props['workspaces_workspaces_sg']
+        redshift_sg = props['redshift_sg']
+        redshift_cluster_role = props['redshift_cluster_role']
         customer_key = props['customer_key']
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/
         # https://aws.amazon.com/jp/blogs/news/build-fast-flexible-secure-machine-learning-platform-using-amazon-sagemaker-and-amazon-redshift/
-
-        # IAMロール
-        redshift_role = iam.Role(
-            self, 'RedshiftRole',
-            assumed_by=iam.ServicePrincipal('redshift.amazonaws.com')
-        )
-        redshift_role_policy = iam.ManagedPolicy(
-            self, 'RedshiftRolePolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        "s3:*"
-                    ],
-                    not_resources=[
-                        'arn:aws:s3:::log-{}-{}'.format(
-                            self.node.try_get_context('account'),
-                            self.node.try_get_context('bucket_suffix')
-                        ),
-                        'arn:aws:s3:::log-{}-{}/*'.format(
-                            self.node.try_get_context('account'),
-                            self.node.try_get_context('bucket_suffix')
-                        ),
-                    ]
-                ),
-            ]
-        )
-        redshift_role.add_managed_policy(redshift_role_policy)
-
-        # セキュリティグループ
-        redshift_sg = ec2.SecurityGroup(
-            self, 'RedshiftSecurityGroup',
-            vpc=vpc
-        )
-        # VPCエンドポイントへのアクセスを許可
-        redshift_sg.connections.allow_to(
-            other=endpoint_sg,
-            port_range=ec2.Port.all_traffic()
-        )
-        # WorkSpacesのセキュリティグループからのアクセスを許可
-        redshift_sg.connections.allow_from(
-            other=workspaces_sg,
-            port_range=ec2.Port.tcp(self.node.try_get_context('redshift')['port'])
-        )
 
         # クラスターパラメーターグループ
         cluster_parameter_group = redshift.CfnClusterParameterGroup(
@@ -94,7 +51,7 @@ class RedshiftStack(core.Stack):
             port=self.node.try_get_context('redshift')['port'],
             master_username=self.node.try_get_context('redshift')['master_username'],
             master_user_password=self.node.try_get_context('redshift')['master_user_password'],
-            iam_roles=[redshift_role.role_arn],
+            iam_roles=[redshift_cluster_role.role_arn],
             vpc_security_group_ids=[redshift_sg.security_group_id],
             cluster_subnet_group_name=cluster_subnet_group.ref,
             cluster_parameter_group_name=cluster_parameter_group.ref,

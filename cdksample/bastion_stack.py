@@ -10,16 +10,10 @@ class BastionStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['workspaces_vpc']
-        workspaces_proxy_sg = props['workspaces_proxy_sg']
+        bastion_sg = props['bastion_sg']
 
         # EC2の作成
         # https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_ec2/Instance.html
-
-        # Bastion用セキュリティーグループ
-        bastion_sg = ec2.SecurityGroup(
-            self, 'BastionSecurityGroup',
-            vpc=vpc
-        )
 
         # Bastion用EC2ホスト
         bastion_host = ec2.Instance(
@@ -30,16 +24,6 @@ class BastionStack(core.Stack):
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             security_group=bastion_sg
-        )
-
-        # 外部からのSSHを許可
-        bastion_sg.connections.allow_from_any_ipv4(
-            ec2.Port.tcp(22)
-        )
-        # ProxyインスタンスへのSSHを許可
-        bastion_sg.connections.allow_to(
-            other=workspaces_proxy_sg,
-            port_range=ec2.Port.tcp(22)
         )
 
         self.output_props = props.copy()

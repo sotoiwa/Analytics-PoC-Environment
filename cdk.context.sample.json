@@ -32,7 +32,7 @@
     "cluster_type": "multi-node",
     "number_of_nodes": 6,
     "node_type": "dc2.large",
-    "cluster_identifier": "redshift-cluster",
+    "cluster_identifier": "redshift-cluster-poc",
     "db_name": "poc",
     "port": 5439,
     "master_username": "awsuser",
@@ -41,6 +41,7 @@
   },
   "sagemaker": {
     "instance_type": "ml.t2.medium",
+    "volume_size_in_gb": 20,
     "notebook_instance_names": [
       "MyNotebook1"
     ]

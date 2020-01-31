@@ -59,4 +59,4 @@ WorkSpacesクライアントを起動します。
   |全体管理者|AdminRole、CostAdminRole、SystemAdminRole、S3AdminRole、KmsAdminRole、SecurityAuditRole、DataScientistRole||
   |環境管理者|CostAdminRole、SystemAdminRole、S3AdminRole||
   |セキュリティ監査者|KmsAdminRole、SecurityAuditRole||
-  |管理者|DataScientistRole||
+  |分析者|DataScientistRole||

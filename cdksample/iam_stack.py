@@ -244,6 +244,67 @@ class IamStack(core.Stack):
         )
         data_scientist_role.add_managed_policy(data_scientist_role_policy)
 
+        # Redshiftクラスター用IAMロール
+        redshift_cluster_role = iam.Role(
+            self, 'RedshiftClusterRole',
+            role_name='RedshiftClusterRole',
+            assumed_by=iam.ServicePrincipal('redshift.amazonaws.com')
+        )
+        redshift_cluster_role_policy = iam.ManagedPolicy(
+            self, 'RedshiftClusterRolePolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:*"
+                    ],
+                    not_resources=[
+                        'arn:aws:s3:::log-{}-{}'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                        'arn:aws:s3:::log-{}-{}/*'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                    ]
+                ),
+            ]
+        )
+        redshift_cluster_role.add_managed_policy(redshift_cluster_role_policy)
+
+        # ノートブック実行用のIAMロール
+        notebook_execution_role = iam.Role(
+            self, 'NotebookExecutionRole',
+            role_name='NotebookExecutionRole',
+            assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com')
+        )
+        notebook_execution_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name('AmazonSageMakerFullAccess'))
+        notebook_execution_role_policy = iam.ManagedPolicy(
+            self, 'NotebookExecutionRolePolicy',
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:ListBucket",
+                        "s3:GetObject",
+                        "s3:PutObject",
+                        "s3:DeleteObject"
+                    ],
+                    not_resources=[
+                        'arn:aws:s3:::sagemaker-{}-{}'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                        'arn:aws:s3:::sagemaker-{}-{}/*'.format(
+                            self.node.try_get_context('account'),
+                            self.node.try_get_context('bucket_suffix')
+                        ),
+                    ]
+                ),
+            ]
+        )
+        notebook_execution_role.add_managed_policy(notebook_execution_role_policy)
+
         ################
         # IAMグループの作成
         ################
@@ -461,6 +522,8 @@ class IamStack(core.Stack):
         self.output_props['security_audit_role'] = security_audit_role
         self.output_props['kms_admin_role'] = kms_admin_role
         self.output_props['data_scientist_role'] = data_scientist_role
+        self.output_props['redshift_cluster_role'] = redshift_cluster_role
+        self.output_props['notebook_execution_role'] = notebook_execution_role
 
     @property
     def outputs(self):

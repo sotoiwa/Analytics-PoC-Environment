@@ -2,6 +2,8 @@ from aws_cdk import (
     core,
     aws_ec2 as ec2,
     aws_iam as iam,
+    aws_kms as kms,
+    aws_s3 as s3,
     aws_sagemaker as sagemaker
 )
 
@@ -12,54 +14,18 @@ class SageMakerStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         vpc = props['analytics_vpc']
-        endpoint_sg = props['analytics_endpoint_sg']
-        customer_key = props['customer_key']
+        notebook_sg = props['notebook_sg']
+        notebook_execution_role = props['notebook_execution_role']
         data_bucket = props['data_bucket']
+        customer_key = props['customer_key']
 
         # 参考リンク
         # https://aws.amazon.com/jp/blogs/news/build-fast-flexible-secure-machine-learning-platform-using-amazon-sagemaker-and-amazon-redshift/
 
-        # IAMロール
-        notebook_execution_role = iam.Role(
-            self, 'NotebookExecutionRole',
-            assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com')
-        )
-        notebook_execution_role_policy = iam.ManagedPolicy(
-            self, 'NotebookExecutionRolePolicy',
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        "s3:*"
-                    ],
-                    not_resources=[
-                        'arn:aws:s3:::log-{}-{}'.format(
-                            self.node.try_get_context('account'),
-                            self.node.try_get_context('bucket_suffix')
-                        ),
-                        'arn:aws:s3:::log-{}-{}/*'.format(
-                            self.node.try_get_context('account'),
-                            self.node.try_get_context('bucket_suffix')
-                        ),
-                    ]
-                ),
-            ]
-        )
-        notebook_execution_role.add_managed_policy(notebook_execution_role_policy)
-
-        # セキュリティーグループ
-        notebook_sg = ec2.SecurityGroup(
-            self, 'NotebookSecurityGroup',
-            vpc=vpc
-        )
-        # VPCエンドポイントへのアクセスを許可
-        notebook_sg.connections.allow_to(
-            other=endpoint_sg,
-            port_range=ec2.Port.all_traffic()
-        )
-
         # Notebookインスタンス
         i = 0
         for notebook_instance_name in self.node.try_get_context('sagemaker')['notebook_instance_names']:
+            # インスタンスの作成
             notebook_instance = sagemaker.CfnNotebookInstance(
                 self, '{}NotebookInstance'.format(notebook_instance_name),
                 instance_type=self.node.try_get_context('sagemaker')['instance_type'],
@@ -68,7 +34,8 @@ class SageMakerStack(core.Stack):
                 security_group_ids=[notebook_sg.security_group_id],
                 role_arn=notebook_execution_role.role_arn,
                 direct_internet_access='Disabled',
-                kms_key_id=customer_key.key_id
+                kms_key_id=customer_key.key_id,
+                volume_size_in_gb=self.node.try_get_context('sagemaker')['volume_size_in_gb']
             )
             i += 1
 

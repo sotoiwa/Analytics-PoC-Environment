@@ -111,13 +111,13 @@ CDKが使用するバケットを作成します。
 cdk bootstrap
 ```
 
-VPCをデプロイします。
+VPCとセキュリティグループをデプロイします。
 
 ```
-cdk deploy *VpcStack *VpcPeeringStack --require-approval never
+cdk deploy *NetworkStack --require-approval never
 ```
 
-IAMユーザーをデプロイします。
+IAM設定をデプロイします。
 
 ```
 cdk deploy *IamStack --require-approval never
@@ -138,7 +138,7 @@ cdk deploy *AuditLogStack --require-approval never
 Events、Config設定をデプロイします。
 
 ```
-cdk deploy *EventsStack *ConfigStack *GuardDutyStack--require-approval never
+cdk deploy *EventsStack *ConfigStack --require-approval never
 ```
 
 Proxyサーバーと踏み台サーバーをデプロイします。
@@ -195,6 +195,31 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 
 - [WorkSpacesの払い出し](workspaces_deploy.md)
 - [WorkSpacesの利用](workspaces_use.md)
+
+## エンドポイントの作成
+
+SimpleADの作成時、VPCにCloudWatchのエンドポイントがあるとエラーになるため、意図的に作成していませんでした。
+エンドポイントを作成します。
+
+`network_stack.py`の以下の部分をアンコメントします。
+
+```
+        # WorkSpaces用にVPCのCloudWatchのVPCエンドポイントを作成
+        # このエンドポイントが存在するとSimple ADの作成に失敗するのでコメントアウト
+        workspaces_vpc_cloudwatch_endpoint = workspaces_vpc.add_interface_endpoint(
+            id='WorkSpacesVPCCloudWatchEndpoint',
+            service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
+            private_dns_enabled=True,
+            security_groups=[workspaces_vpc_endpoint_sg],
+            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
+        )
+```
+
+スタックを更新します。
+
+```
+cdk deploy *NetworkStack --require-approval never
+```
 
 ## SAP
 

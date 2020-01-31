@@ -18,11 +18,12 @@ class BucketStack(core.Stack):
         security_audit_role = props['security_audit_role']
         kms_admin_role = props['kms_admin_role']
         data_scientist_role = props['data_scientist_role']
+        notebook_execution_role = props['notebook_execution_role']
+        redshift_cluster_role = props['redshift_cluster_role']
 
         ################
         # キーの作成
         ################
-        self.node.try_get_context('proxy_server')['domain']
 
         # キーを作成
         customer_key = kms.Key(
@@ -30,14 +31,6 @@ class BucketStack(core.Stack):
             enable_key_rotation=True,
             alias='CustomerKey'
         )
-        # 先にIAMロールができてないとキーポリシーの追加時にエラーになるので依存性を追加
-        customer_key.node.add_dependency(admin_role)
-        customer_key.node.add_dependency(cost_admin_role)
-        customer_key.node.add_dependency(s3_admin_role)
-        customer_key.node.add_dependency(system_admin_role)
-        customer_key.node.add_dependency(security_audit_role)
-        customer_key.node.add_dependency(kms_admin_role)
-        customer_key.node.add_dependency(data_scientist_role)
 
         # IAMユーザーの許可を有効にするキーポリシー
         # 自動的に追加されるのでコメントアウト
@@ -54,13 +47,12 @@ class BucketStack(core.Stack):
         # )
 
         # 管理者を設定するキーポリシー
+        # キーポリシーに設定するロールは先にできてないとエラーになるので注意
         customer_key.add_to_resource_policy(
             statement=iam.PolicyStatement(
                 principals=[
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
-                        self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/KmsAdminRole'.format(
-                        self.node.try_get_context('account')))
+                    admin_role,
+                    kms_admin_role
                 ],
                 actions=[
                     "kms:Create*",
@@ -85,12 +77,11 @@ class BucketStack(core.Stack):
         customer_key.add_to_resource_policy(
             statement=iam.PolicyStatement(
                 principals=[
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
-                        self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/SystemAdminRole'.format(
-                        self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/DataScientistRole'.format(
-                        self.node.try_get_context('account')))
+                    admin_role,
+                    system_admin_role,
+                    data_scientist_role,
+                    redshift_cluster_role,
+                    notebook_execution_role
                 ],
                 actions=[
                     "kms:Decrypt",
@@ -123,10 +114,10 @@ class BucketStack(core.Stack):
         data_bucket.add_to_resource_policy(
             permission=iam.PolicyStatement(
                 principals=[
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/AdminRole'.format(
-                        self.node.try_get_context('account'))),
-                    iam.ArnPrincipal('arn:aws:iam::{}:role/DataScientistRole'.format(
-                        self.node.try_get_context('account')))
+                    admin_role,
+                    data_scientist_role,
+                    redshift_cluster_role,
+                    notebook_execution_role
                 ],
                 actions=[
                     "s3:GetObject*",
@@ -241,10 +232,28 @@ class BucketStack(core.Stack):
             )
         )
 
+        ################
+        # ノートブック用バケットの作成
+        ################
+
+        # バケットの作成
+        notebook_bucket = s3.Bucket(
+            self, 'NotebookBucket',
+            bucket_name='sagemaker-{}-{}'.format(
+                self.node.try_get_context('account'),
+                self.node.try_get_context('bucket_suffix'),
+            ),
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.KMS,
+            encryption_key=customer_key,
+            versioned=True
+        )
+
         self.output_props = props.copy()
         self.output_props['customer_key'] = customer_key
         self.output_props['data_bucket'] = data_bucket
         self.output_props['log_bucket'] = log_bucket
+        self.output_props['notebook_bucket'] = notebook_bucket
 
     @property
     def outputs(self):
