@@ -5,9 +5,14 @@
 - AWSアカウントが作成済みとします。
 - デプロイは管理者権限を持つIAMユーザーの権限で行うため、IAMユーザーを用意して下さい。
 - あらかじめ、環境をデプロイするリージョンにキーペアを用意して下さい。このキーペアはProxyインスタンスに設定します。
-- EIPを4つ使用するため、既にVPCを作成済みの環境ではアカウントのEIP数の上限（デフォルトでは5）に引っかかる可能性があります。必要に応じてEIP数の上限緩和申請をして下さい。
-- CDKを実行する環境としてCloud9環境を使用します。以下の手順に従ってCloud9をセットアップして下さい。
-  - [Cloud9環境のセットアップ](cloud9.md)
+- EIPを2つ使用するため、既にVPCを作成済みの環境ではアカウントのEIP数の上限（デフォルトでは5）に注意し、必要に応じてEIP数の上限緩和申請をして下さい。
+- CDKを実行環境のセットアップを容易にするため、Cloud9環境を使用します。
+
+## Cloud9環境のセットアップ
+
+以下の手順に従ってCloud9をセットアップして下さい。
+
+- [Cloud9環境のセットアップ](cloud9.md)
 
 ## アカウントの基本的な設定
 
@@ -70,7 +75,7 @@ python3 -m venv .env
 source .env/bin/activate
 ```
 
-必要なモジュールをインストールします。
+必要なpipモジュールをインストールします。
 
 ```
 pip install -r requirements.txt
@@ -79,20 +84,22 @@ pip install -r requirements.txt
 ### 環境に合わせたカスタマイズ
 
 `cdk.context.sample.json`を`cdk.context.json`としてコピーします。
-以下パラメータを自分の環境に合わせてカスタマイズします。特に以下のパラメータは必須です。
+以下パラメータを自分の環境に合わせて適宜カスタマイズします。特に以下のパラメータは必須です。
 
 |パラメータ|デフォルト値|備考|
 |---|---|---|
+|`stack_prefix`|`PoC`|デプロイするCloudFormationスタック名のプレフィックス。|
+|`bucket_suffix`|`poc`|作成するS3バケットのサフィックス。|
 |`account`|（設定必須）|環境をデプロイするAWSアカウントを指定します。|
 |`region`|`ap-northeast-1`|環境をデプロイするリージョンを指定します。|
-|`proxy.key_name`|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
-|`allow_ips`|`0.0.0.0/0`|マネージメントコンソールへのアクセスを許可するIPアドレスのリストを指定します。NATゲートウェイが作成されてから指定します。|
 |`default_user_password`|（設定必須）|IAMユーザーのデフォルトのパスワードを指定します。|
-|`admin_user_names`|`admin-user`|管理者ユーザーの名前のリスト。|
+|`admin_user_names`|`admin-user`|管理者ユーザーの名前のリスト。yamadaのようなユーザー名のリストを指定して下さい。|
 |`environment_admin_user_names`|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定します。|
 |`security_audit_user_names`|`security-audit-user`|セキュリティ監査者ユーザーの名前のリストを指定します。|
 |`data_scientist_user_names`|`data-scientist-user`|分析者ユーザーの名前のリストを指定します。|
 |`redshift.master_user_password`|（設定必須）|Redshiftのマスターユーザーのパスワードを指定します。下記のパスワード要件があるため注意して下さい。|
+|`proxy.key_name`|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
+|`allow_ips`|`0.0.0.0/0`|マネージメントコンソールへのアクセスを許可するIPアドレスのリストを指定します。NATゲートウェイが作成されてから指定します。|
 |`emales_to_alert`|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定します。|
 
 （補足）Redshiftのマスターユーザーのパスワード要件
@@ -112,6 +119,8 @@ cdk bootstrap
 ```
 
 VPCとセキュリティグループをデプロイします。
+なお、この際、WorkSpaces用のVPCのCloudWatchのVPCエンドポイントを、デプロイ対象から除外しています。
+これはSimple ADの作成時にCloudWatchのVPCエンドポイントが存在するとエラーとなるという既知の事象の回避のためです。
 
 ```
 cdk deploy *NetworkStack --require-approval never
@@ -174,13 +183,13 @@ aws ec2 describe-nat-gateways | jq '.NatGateways[] | select( [ .Tags[] | select(
   ],
 ```
 
-IAM設定を更新します。
+IPアドレス制限のIAM設定を更新します。
 
 ```
 cdk deploy *IamStack --require-approval never
 ```
 
-Redshiftクラスターの拡張VPCルーティングを有効にします。クラスター識別子は`cdk.context.json`の`redshift.cluster_identifier`で指定したものです。
+Redshiftクラスターの拡張VPCルーティングをCLIから有効にします。クラスター識別子は`cdk.context.json`の`redshift.cluster_identifier`で指定したものです。
 
 ```
 cluster_identifier=<クラスター識別子>
@@ -196,12 +205,12 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 - [WorkSpacesの払い出し](workspaces_deploy.md)
 - [WorkSpacesの利用](workspaces_use.md)
 
-## エンドポイントの作成
+## VPCエンドポイントの作成
 
-SimpleADの作成時、VPCにCloudWatchのエンドポイントがあるとエラーになるため、意図的に作成していませんでした。
-エンドポイントを作成します。
+VPCのデプロイ時、WorkSpaces用のVPCには意図的にCloudWatchのエンドポイントを作成していませんでした。
+ここで、VPCエンドポイントを作成します。
 
-`network_stack.py`の以下の部分をアンコメントします。
+`network_stack.py`で以下の部分をアンコメントします。
 
 ```
         # WorkSpaces用にVPCのCloudWatchのVPCエンドポイントを作成
