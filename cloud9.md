@@ -42,6 +42,18 @@ Cloud9は呼び出したAWSアカウントが利用可能な全てのAWSリソ�
 1. Cloud9で右上の設定アイコンを選択します。
 1. **AWS SETTINGS**の**AWS managed temporary credentials**を無効にします。
 
+クレデンシャルファイルが既にある場合は削除します。
+
+```
+rm -vf ${HOME}/.aws/credentials
+```
+
+以下のコマンドを実行し、出力に`MyCloud9InstanceRole`が含まれることを確認します。
+
+```
+aws sts get-caller-identity
+```
+
 ## バージョン確認
 
 Node.js、Python等のバージョンを確認します。
@@ -61,7 +73,7 @@ aws --version
 $ aws configure
 AWS Access Key ID [None]: <空ENTER>
 AWS Secret Access Key [None]: <空ENTER>
-Default region name [None]: ap-notheast-1
+Default region name [None]: ap-northeast-1
 Default output format [None]: <空ENTER>
 ```
 
