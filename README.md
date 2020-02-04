@@ -219,6 +219,24 @@ aws redshift modify-cluster \
   --enhanced-vpc-routing
 ```
 
+## 踏み台サーバーの削除
+
+稼働確認後、踏み台サーバーは削除します。
+
+```
+cdk destroy -f *BastionStack
+```
+
+### IAMユーザーのパスワードの取得
+
+IAMユーザーのパスワードは`cdk.context.json`で指定しました。
+このパスワードはCloudFormationのテンプレートにも出力されており、テキストとして閲覧可能は状態にあります。ユーザーは初回ログイン時にパスワードを変更する必要があります。
+
+### Redshiftのパスワードの変更
+
+Redshiftのパスワードは`cdk.context.json`で指定しました。
+このパスワードはCloudFormationのテンプレートにも出力されており、テキストとして閲覧可能は状態にあるため、マネージメントコンソールからパスワードを変更して下さい。
+
 ## WorkSpaces
 
 WorkSpacesについてはCDKではなくマネージメントコンソールからの払い出しを行います。
@@ -226,7 +244,7 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 - [WorkSpacesの払い出し](workspaces_deploy.md)
 - [WorkSpacesの利用](workspaces_use.md)
 
-## VPCエンドポイントの作成
+### VPCエンドポイントの作成
 
 VPCのデプロイ時、WorkSpaces用のVPCには意図的にCloudWatchのエンドポイントを作成していませんでした。
 これはSimple ADの作成時にCloudWatchのVPCエンドポイントが存在するとエラーとなるという既知の事象の回避のためです。
@@ -252,26 +270,22 @@ Simple ADの作成が終わったあと、VPCエンドポイントを作成し�
 cdk deploy *NetworkStack --require-approval never
 ```
 
-## 踏み台サーバーの削除
-
-稼働確認後、踏み台サーバーは削除します。
-
-```
-cdk destroy -f *BastionStack
-```
-
 ## SAP
 
 SAP環境についてはクイックスタートを使ってマネージメントコンソールから構築します。
 
 - [AWS クラウドでの SAP HANA: クイックスタートリファレンスデプロイ](https://docs.aws.amazon.com/ja_jp/quickstart/latest/sap-hana/welcome.html)
 
-### IAMユーザーのパスワードの取得
+## 環境の削除
 
-IAMユーザーのパスワードは`cdk.context.json`で指定しました。
-このパスワードはCloudFormationのテンプレートにも出力されており、テキストとして閲覧可能は状態にあります。ユーザーは初回ログイン時にパスワードを変更する必要があります。
+CDKからデプロイしたリソースは`cdk destroy`コマンドで削除できますが、CDKからデプロイしたリソースに依存するCDKの管理外のリソースがあると削除に失敗します。
+先にそれらのリソースを手動で削除して下さい。例えば、以下のリソースです。
 
-### Redshiftのパスワードの変更
+- Proxyインスタンスが起動時に登録するRoute 53のレコードセット（proxy.example.com）
+- WorkSpacesインスタンス、Simple AD
 
-Redshiftのパスワードは`cdk.context.json`で指定しました。
-このパスワードはCloudFormationのテンプレートにも出力されており、テキストとして閲覧可能は状態にあるため、マネージメントコンソールからパスワードを変更して下さい。
+CDKからデプロイしたリソースの削除は以下のコマンドで実施します。
+
+```
+cdk destroy -f *Stack
+```
