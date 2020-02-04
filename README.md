@@ -229,7 +229,8 @@ WorkSpacesについてはCDKではなくマネージメントコンソールか�
 ## VPCエンドポイントの作成
 
 VPCのデプロイ時、WorkSpaces用のVPCには意図的にCloudWatchのエンドポイントを作成していませんでした。
-ここで、VPCエンドポイントを作成します。
+これはSimple ADの作成時にCloudWatchのVPCエンドポイントが存在するとエラーとなるという既知の事象の回避のためです。
+Simple ADの作成が終わったあと、VPCエンドポイントを作成します。
 
 `network_stack.py`で以下の部分をアンコメントします。
 
