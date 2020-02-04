@@ -183,13 +183,13 @@ class NetworkStack(core.Stack):
 
         # WorkSpaces用にVPCのCloudWatchのVPCエンドポイントを作成
         # このエンドポイントが存在するとSimple ADの作成に失敗するのでコメントアウト
-        workspaces_vpc_cloudwatch_endpoint = workspaces_vpc.add_interface_endpoint(
-            id='WorkSpacesVPCCloudWatchEndpoint',
-            service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
-            private_dns_enabled=True,
-            security_groups=[workspaces_vpc_endpoint_sg],
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
-        )
+        # workspaces_vpc_cloudwatch_endpoint = workspaces_vpc.add_interface_endpoint(
+        #     id='WorkSpacesVPCCloudWatchEndpoint',
+        #     service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
+        #     private_dns_enabled=True,
+        #     security_groups=[workspaces_vpc_endpoint_sg],
+        #     subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
+        # )
         # 分析用VPCにCloudWatchのVPCエンドポイントを作成
         analytics_vpc_cloudwatch_endpoint = analytics_vpc.add_interface_endpoint(
             id='AnalyticsVPCCloudWatchEndpoint',
