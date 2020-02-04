@@ -213,7 +213,7 @@ cdk deploy *IamStack --require-approval never
 Redshiftクラスターの拡張VPCルーティングをCLIから有効にします。クラスター識別子は`cdk.context.json`の`redshift.cluster_identifier`で指定したものです。
 
 ```
-cluster_identifier=$(cat cdk.context.json | jq -r '.redshift.cluster_identifier')   
+cluster_identifier=$(cat cdk.context.json | jq -r '.redshift.cluster_identifier')
 aws redshift modify-cluster \
   --cluster-identifier ${cluster_identifier} \
   --enhanced-vpc-routing
@@ -250,6 +250,14 @@ Simple ADの作成が終わったあと、VPCエンドポイントを作成し�
 
 ```
 cdk deploy *NetworkStack --require-approval never
+```
+
+## 踏み台サーバーの削除
+
+稼働確認後、踏み台サーバーは削除します。
+
+```
+cdk destroy -f *BastionStack
 ```
 
 ## SAP

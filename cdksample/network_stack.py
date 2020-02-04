@@ -142,7 +142,7 @@ class NetworkStack(core.Stack):
             redshift_sg,
             ec2.Port.all_traffic()
         )
-        workspaces_vpc_endpoint_sg.add_ingress_rule(
+        analytics_vpc_endpoint_sg.add_ingress_rule(
             notebook_sg,
             ec2.Port.all_traffic()
         )
