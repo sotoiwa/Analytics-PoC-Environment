@@ -93,25 +93,37 @@ pip install -r requirements.txt
 ### 環境に合わせたカスタマイズ
 
 `cdk.context.sample.json`を`cdk.context.json`としてコピーします。
+
+```
+cp cdk.context.sample.json cdk.context.json
+```
+
+
 以下パラメータを自分の環境に合わせて適宜カスタマイズします。特に以下のパラメータは必須です。
 
 |パラメータ|デフォルト値|備考|
 |---|---|---|
 |`stack_prefix`|`PoC`|デプロイするCloudFormationスタック名のプレフィックス。|
 |`bucket_suffix`|`poc`|作成するS3バケットのサフィックス。|
-|`account`|（設定必須）|環境をデプロイするAWSアカウントを指定します。|
-|`region`|`ap-northeast-1`|環境をデプロイするリージョンを指定します。|
-|`default_user_password`|（設定必須）|IAMユーザーのデフォルトのパスワードを指定します。|
+|`account`|（設定必須）|環境をデプロイするAWSアカウントを指定して下さい。アカウントIDの確認コマンドは下記の補足を参照。|
+|`region`|`ap-northeast-1`|環境をデプロイするリージョンを指定して下さい。|
+|`default_user_password`|（設定必須）|IAMユーザーのデフォルトのパスワードを指定します。パスワード要件を上で設定しているため注意して下さい。|
 |`admin_user_names`|`admin-user`|管理者ユーザーの名前のリスト。yamadaのようなユーザー名のリストを指定して下さい。|
-|`environment_admin_user_names`|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定します。|
-|`security_audit_user_names`|`security-audit-user`|セキュリティ監査者ユーザーの名前のリストを指定します。|
-|`data_scientist_user_names`|`data-scientist-user`|分析者ユーザーの名前のリストを指定します。|
-|`redshift.master_user_password`|（設定必須）|Redshiftのマスターユーザーのパスワードを指定します。下記のパスワード要件があるため注意して下さい。|
-|`proxy.key_name`|（設定必須）|事前に作成したキーペアの名前を指定します。このキーペアはProxyインスタンスに配置されます。|
-|`allow_ips`|`0.0.0.0/0`|マネージメントコンソールへのアクセスを許可するIPアドレスのリストを指定します。NATゲートウェイが作成されてから指定します。|
-|`emales_to_alert`|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定します。|
+|`environment_admin_user_names`|`environment-admin-user`|環境管理者ユーザーの名前のリストを指定して下さい。|
+|`security_audit_user_names`|`security-audit-user`|セキュリティ監査者ユーザーの名前のリストを指定して下さい。|
+|`data_scientist_user_names`|`data-scientist-user`|分析者ユーザーの名前のリストを指定して下さい。|
+|`redshift.master_user_password`|（設定必須）|Redshiftのマスターユーザーのパスワードを指定して下さい。下記のパスワード要件があるため注意して下さい。|
+|`proxy.key_name`|（設定必須）|事前に作成したキーペアの名前を指定して下さい。このキーペアはProxyインスタンスに配置されます。|
+|`allow_ips`|`0.0.0.0/0`|マネージメントコンソールへのアクセスを許可するIPアドレスのリストを指定しますが、ここではデフォルトのまま（無制限）にして下さい。|
+|`emales_to_alert`|（設定必須）|アラートメールの宛先のEメールアドレスのリストを指定して下さい。|
 
-（補足）Redshiftのマスターユーザーのパスワード要件
+（補足1）アカウントIDの確認コマンド
+
+```
+aws sts get-caller-identity --output text --query Account
+```
+
+（補足2）Redshiftのマスターユーザーのパスワード要件
 
 - 値は 8 ～ 64 文字長である必要があります。
 - 値には、少なくとも 1 つの大文字が含まれている必要があります。
