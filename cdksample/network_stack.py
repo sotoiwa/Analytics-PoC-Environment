@@ -1,8 +1,7 @@
 from aws_cdk import (
     core,
     aws_ec2 as ec2,
-    aws_iam as iam,
-    aws_route53 as route53
+    aws_iam as iam
 )
 
 
