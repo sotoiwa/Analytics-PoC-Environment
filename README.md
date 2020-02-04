@@ -213,7 +213,7 @@ cdk deploy *IamStack --require-approval never
 Redshiftクラスターの拡張VPCルーティングをCLIから有効にします。クラスター識別子は`cdk.context.json`の`redshift.cluster_identifier`で指定したものです。
 
 ```
-cluster_identifier=<クラスター識別子>
+cluster_identifier=$(cat cdk.context.json | jq -r '.redshift.cluster_identifier')   
 aws redshift modify-cluster \
   --cluster-identifier ${cluster_identifier} \
   --enhanced-vpc-routing
