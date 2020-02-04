@@ -18,7 +18,16 @@
 
 アカウントレベルでの基本的な設定をCDKではなくCLIで行います。
 
-IAMユーザーのパスワードポリシーを設定します。
+IAMユーザーのパスワードポリシーを設定します。このポリシーは以下のようなポリシーです。
+
+- パスワードの最小文字数は 8 文字です
+- 1 文字以上のアルファベット大文字 (A～Z) を必要とする
+- 1 文字以上のアルファベット小文字 (a～z) を必要とする
+- Require at least one number
+- Require at least one non-alphanumeric character (!@#$%^&*()_+-=[]{}|')
+- パスワードは 30 日で有効期限が切れます
+- Allow users to change their own password
+- 直近 10 回分のパスワードを記憶して再利用を防ぐ
 
 ```
 aws iam update-account-password-policy \
@@ -35,7 +44,7 @@ aws iam update-account-password-policy \
 アカウントレベルでS3のブロックパブリックアクセスを有効にします。
 
 ```
-ACCOUNT_ID=<account id>
+ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
 aws s3control put-public-access-block \
   --account-id ${ACCOUNT_ID} \
   --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
