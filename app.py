@@ -5,14 +5,14 @@ from aws_cdk import core
 from cdksample.network_stack import NetworkStack
 from cdksample.iam_stack import IamStack
 from cdksample.bucket_stack import BucketStack
-from cdksample.proxy_stack import ProxyStack
-from cdksample.bastion_stack import BastionStack
-from cdksample.redshift_stack import RedshiftStack
-from cdksample.sagemaker_stack import SageMakerStack
 from cdksample.audit_log_stack import AuditLogStack
 from cdksample.events_stack import EventsStack
 from cdksample.global_events_stack import GlobalEventsStack
 from cdksample.config_stack import ConfigStack
+from cdksample.proxy_stack import ProxyStack
+from cdksample.bastion_stack import BastionStack
+from cdksample.redshift_stack import RedshiftStack
+from cdksample.sagemaker_stack import SageMakerStack
 
 
 app = core.App()
