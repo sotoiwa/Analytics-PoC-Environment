@@ -27,8 +27,8 @@ global_env = core.Environment(
 )
 props = dict()
 
-workspaces_vpc_stack = NetworkStack(app, '{}-NetworkStack'.format(prefix), env=env, props=props)
-props = workspaces_vpc_stack.outputs
+network_stack = NetworkStack(app, '{}-NetworkStack'.format(prefix), env=env, props=props)
+props = network_stack.outputs
 
 iam_stack = IamStack(app, '{}-IamStack'.format(prefix), env=env, props=props)
 props = iam_stack.outputs
