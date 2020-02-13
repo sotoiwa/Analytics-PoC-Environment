@@ -34,7 +34,7 @@ class EventsStack(core.Stack):
         # サブスクリプションを設定
         emails = self.node.try_get_context('emails_to_alert')
         for email in emails:
-            alert_topic.add_subscription(subscriptions.EmailSubscription('sotoiwa@gmail.com'))
+            alert_topic.add_subscription(subscriptions.EmailSubscription(email))
 
         # GuardDutyの通知設定
         guardduty_rule = events.Rule(
