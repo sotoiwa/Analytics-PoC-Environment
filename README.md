@@ -1,4 +1,4 @@
-# CDKサンプルプロジェクト
+# Analytics-PoC-Environment
 
 ## 前提
 
@@ -71,8 +71,8 @@ npm install -g aws-cdk
 CDKプロジェクトをローカルにクローンします。
 
 ```
-git clone https://github.com/sotoiwa/aws-cdksample.git
-cd aws-cdksample
+git clone https://github.com/sotoiwa/Analytics-PoC-Environment.git
+cd Analytics-PoC-Environment
 ```
 
 ### Pythonの準備
