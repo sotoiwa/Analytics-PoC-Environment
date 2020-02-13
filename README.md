@@ -241,8 +241,8 @@ Redshiftのパスワードは`cdk.context.json`で指定しました。
 
 WorkSpacesについてはCDKではなくマネージメントコンソールからの払い出しを行います。
 
-- [WorkSpacesの払い出し](workspaces_deploy.md)
-- [WorkSpacesの利用](workspaces_use.md)
+- [WorkSpacesの払い出し](workspaces-deploy.md)
+- [WorkSpacesの利用](workspaces-use.md)
 
 ### VPCエンドポイントの作成
 
