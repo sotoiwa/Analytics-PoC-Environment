@@ -270,6 +270,14 @@ Simple ADの作成が終わったあと、VPCエンドポイントを作成し�
 cdk deploy *NetworkStack --require-approval never
 ```
 
+### WorkSpacesのログイン記録
+
+WorkSpacesへのログインを記録するCloudWatch Events Ruleを作成します。CDKからRuleのターゲットとしてCloudWatch Logsを指定できないため、GUIで作成します。
+
+![](images/events-rule01.png)
+
+![](images/events-rule02.png)
+
 ## SAP
 
 SAP環境についてはクイックスタートを使ってマネージメントコンソールから構築します。
