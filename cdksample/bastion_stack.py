@@ -17,10 +17,10 @@ class BastionStack(core.Stack):
 
         # Bastion用EC2ホスト
         bastion_host = ec2.Instance(
-            self, 'BasionHost',
+            self, 'BastionHost',
             instance_type=ec2.InstanceType('t2.small'),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2),
-            key_name=self.node.try_get_context('key_name'),
+            key_name=self.node.try_get_context('proxy_server')['key_name'],
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             security_group=bastion_sg
