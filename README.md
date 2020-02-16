@@ -1,5 +1,13 @@
 # Analytics-PoC-Environment
 
+#### インフラ構成
+
+![](images/architecture.png)
+
+#### CDKスタックの依存関係
+
+![](images/stack-dependencies.png)
+
 ## 前提
 
 - AWSアカウントが作成済みとします。
