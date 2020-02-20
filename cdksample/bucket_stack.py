@@ -78,6 +78,7 @@ class BucketStack(core.Stack):
             statement=iam.PolicyStatement(
                 principals=[
                     admin_role,
+                    s3_admin_role,
                     system_admin_role,
                     data_scientist_role,
                     redshift_cluster_role,
