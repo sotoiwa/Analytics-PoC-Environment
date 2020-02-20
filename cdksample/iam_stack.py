@@ -133,9 +133,7 @@ class IamStack(core.Stack):
                     actions=[
                         "s3:PutAccountPublicAccessBlock",
                         "s3:PutBucketPublicAccessBlock",
-                        "s3:PutAccessPointPolicy",
-                        "kms:ListAliases",
-                        "kms:ListKeys"
+                        "s3:PutAccessPointPolicy"
                     ],
                     resources=["*"]
                 )
