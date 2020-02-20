@@ -132,7 +132,6 @@ class IamStack(core.Stack):
                     effect=iam.Effect.DENY,
                     actions=[
                         "s3:PutAccountPublicAccessBlock",
-                        "s3:PutBucketPublicAccessBlock",
                         "s3:PutAccessPointPolicy"
                     ],
                     resources=["*"]
