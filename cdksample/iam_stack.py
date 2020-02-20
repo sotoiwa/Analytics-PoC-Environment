@@ -122,6 +122,13 @@ class IamStack(core.Stack):
             self, 'S3AdminRolePolicy',
             statements=[
                 iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "kms:ListAliases"
+                    ],
+                    resources=["*"]
+                ),
+                iam.PolicyStatement(
                     effect=iam.Effect.DENY,
                     actions=[
                         "s3:PutAccountPublicAccessBlock",
